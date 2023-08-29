@@ -1,0 +1,10 @@
+[ {
+  "username" : "user_node1",
+  "password" : "user_node1"
+}, {
+  "username" : "user2_node1",
+  "password" : "user2_node1"
+}, {
+  "username" : "user3_node1",
+  "password" : "user3_node1"
+} ]
