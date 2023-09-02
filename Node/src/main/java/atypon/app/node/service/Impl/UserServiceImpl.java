@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
         // split this into Reading an array
         // and writing an array to file
 
-        File jsonFile = new File("Storage/"+ Node.getNodeName()+"/Users.json");
+        File jsonFile = new File("Storage/"+ Node.getName()+"/Users.json");
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         CollectionType listType = objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, User.class);
@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService {
         usersList.add(new User(username, password));
         objectMapper.writeValue(jsonFile, usersList);
 
-        FileOperations.createDirectory("Storage/"+ Node.getNodeName() + "/Users", username);
+        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users", username);
+        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users/"+username, "Databases");
     }
 }

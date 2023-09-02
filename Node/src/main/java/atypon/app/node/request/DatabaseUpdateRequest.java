@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DatabaseUpdateRequest {
+public class DatabaseUpdateRequest extends ApiRequest {
     private String oldDatabaseName;
     private String newDatabaseName;
 }

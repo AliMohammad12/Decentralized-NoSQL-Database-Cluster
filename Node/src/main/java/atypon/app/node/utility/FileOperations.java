@@ -12,15 +12,6 @@ import java.util.List;
 
 // these are CRUD operations of the files and their directory (Synchronized)?
 public class FileOperations {
-    /**
-     * write static methods for CRUD operations for files.
-     */
-    public static void createDatabaseDirectory(String database) {
-        File dbDir = new File("Databases");
-        dbDir.mkdirs();
-        File collectionsDir = new File("Databases/" + database + "/Collections");
-        collectionsDir.mkdirs();
-    }
     public static void deleteDirectory(String directory) throws IOException {
         Path directoryToDelete = Paths.get(directory);
         Files.walk(directoryToDelete)
@@ -32,14 +23,6 @@ public class FileOperations {
                         e.printStackTrace();
                     }
                 });
-    }
-    public static void createCollectionDirectory(String databaseName, String collectionName) {
-        File collectionDir = new File(databaseName + "/Collections/" + collectionName);
-        collectionDir.mkdirs();
-    }
-    public static void createDocumentsDirectory(String directory) {
-        File collectionDir = new File(directory + "/Documents");
-        collectionDir.mkdirs();
     }
     public static void writeJsonAtLocation(String json, String directory, String name) {
         File file = new File(directory, name);
@@ -61,10 +44,6 @@ public class FileOperations {
         File collectionDir = new File(path + "/" + name);
         collectionDir.mkdirs();
     }
-    public static void createDirectoryAt(String location, String name) {
-        File collectionDir = new File(location + "/" + name);
-        collectionDir.mkdirs();
-    }
     public static List<String> readDirectories(String path) {
         File parentDirectory = new File(path);
         File[] subDirectories = parentDirectory.listFiles(file -> file.isDirectory());
@@ -84,8 +63,8 @@ public class FileOperations {
         return new String(Files.readAllBytes(path));
     }
     public static void updateDirectoryName(String path, String oldName, String newName) {
-        File originalFile = new File(path + oldName);
-        File renamedFile = new File( path + newName);
+        File originalFile = new File(path + "/" + oldName);
+        File renamedFile = new File( path + "/" + newName);
         originalFile.renameTo(renamedFile);
     }
 }

@@ -1,23 +1,34 @@
 package atypon.app.node.model;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
-
 public class Node {
     private static String nodeId;
-    private static String nodeName;
-    public static String getNodeName() {
-        return nodeName;
+    private static String name;
+    private static String port;
+
+    public Node() {
     }
-    public static void setNodeName(String nodeName) {
-        Node.nodeName = nodeName;
-    }
+
     public static String getNodeId() {
         return nodeId;
     }
-    public static void setNodeId(String nodeIdValue) {
-        nodeId = nodeIdValue;
+
+    public static void setNodeId(String nodeId) {
+        Node.nodeId = nodeId;
+    }
+
+    public static String getName() {
+        return name;
+    }
+
+    public static void setName(String name) {
+        Node.name = name;
+    }
+
+    public static String getPort() {
+        return port;
+    }
+
+    public static void setPort(String port) {
+        Node.port = port;
     }
 }

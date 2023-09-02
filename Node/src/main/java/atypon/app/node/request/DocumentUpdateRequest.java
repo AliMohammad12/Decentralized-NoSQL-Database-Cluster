@@ -6,13 +6,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocumentUpdateRequest {
+public class DocumentUpdateRequest extends ApiRequest {
     private String id;
     private JsonNode document;
 }

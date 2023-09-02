@@ -1,10 +1,28 @@
 [ {
-  "username" : "user_node1",
-  "password" : "user_node1"
+  "username" : "admin",
+  "password" : "admin"
 }, {
-  "username" : "user2_node1",
-  "password" : "user2_node1"
+  "username" : "admin",
+  "password" : "admin"
 }, {
-  "username" : "user3_node1",
-  "password" : "user3_node1"
+  "username" : "admin",
+  "password" : "admin"
+}, {
+  "username" : "admin",
+  "password" : "admin"
+}, {
+  "username" : "admin",
+  "password" : "admin"
+}, {
+  "username" : "admin",
+  "password" : "admin"
+}, {
+  "username" : "admin",
+  "password" : "admin"
+}, {
+  "username" : "Ahmad",
+  "password" : "Ahmad"
+}, {
+  "username" : "Khaled",
+  "password" : "Khaled"
 } ]

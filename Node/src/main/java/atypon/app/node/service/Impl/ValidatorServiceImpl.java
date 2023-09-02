@@ -1,5 +1,6 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.model.Node;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
@@ -9,16 +10,31 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 
 @Service
 public class ValidatorServiceImpl implements ValidatorService {
+
+    private static Path getPath() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        Path path = Path.of("Storage", Node.getName(), "Users", user.getUsername(), "Databases");
+        return path;
+    }
     @Override
     public ValidatorResponse isDatabaseExists(String databaseName) {
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists("Databases/"+databaseName));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        Path path = getPath().resolve(databaseName);
+
+        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("Database with the name " + databaseName + " exists!");
         } else {
@@ -30,10 +46,15 @@ public class ValidatorServiceImpl implements ValidatorService {
     public ValidatorResponse isCollectionExists(String databaseName, String collectionName) {
         ValidatorResponse validateDatabase = isDatabaseExists(databaseName);
         if (!validateDatabase.isValid()) {
-            validateDatabase.setMessage("Database with the name " + databaseName + "doesn't exist!");
+            validateDatabase.setMessage("Database with the name " + databaseName + " doesn't exist!");
             return validateDatabase;
         }
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists("Databases/"+ databaseName + "/Collections/" + collectionName));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
+
+        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("The collection " + collectionName + " exists within " + databaseName + " database!");
         } else {
@@ -47,7 +68,9 @@ public class ValidatorServiceImpl implements ValidatorService {
         // let json service do some action here
 
         ObjectMapper objectMapper = new ObjectMapper();
-        File collectionsDir = new File("Databases/"+ database +"/Collections/" + collection);
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
+
+        File collectionsDir = new File(path.toString());
         File schemaFile = new File(collectionsDir, "schema.json");
 
         JsonSchemaFactory schemaFactory = JsonSchemaFactory.builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909)).objectMapper(objectMapper).build();
@@ -74,7 +97,8 @@ public class ValidatorServiceImpl implements ValidatorService {
         if (!validateCollection.isValid()) {
             return validateCollection;
         }
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isFileExists("Databases/"+ database + "/Collections/" + collection + "/Documents/"+id+".json"));
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collection).resolve("Documents").resolve(id + ".json");
+        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isFileExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("The requested document within " + collection + " exists !");
         } else {

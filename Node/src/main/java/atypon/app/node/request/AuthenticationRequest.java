@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationRequest { // consider adding validations
+public class AuthenticationRequest extends ApiRequest{ // consider adding validations
     private String username;
     private String password;
 }

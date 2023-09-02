@@ -69,7 +69,6 @@ public class JsonServiceImpl implements JsonService {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // Enables pretty-printing
         return objectMapper.writeValueAsString(jsonNode);
     }
-
     @Override
     public ArrayNode readJsonArray(String path) {
         ObjectMapper objectMapper = new ObjectMapper();

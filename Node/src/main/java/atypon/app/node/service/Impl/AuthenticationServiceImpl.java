@@ -16,7 +16,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request) throws IOException {
         String username = request.getUsername();
         String password = request.getPassword();
-        File jsonFile = new File("Storage/"+ Node.getNodeName()+"Users/Users.json");
+        File jsonFile = new File("Storage/"+ Node.getName()+"Users/Users.json");
         ObjectMapper objectMapper = new ObjectMapper();
 
         User[] users = objectMapper.readValue(jsonFile, User[].class);

@@ -3,7 +3,6 @@ package atypon.app.node.config;
 import atypon.app.node.model.Node;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
@@ -15,6 +14,6 @@ public class NodeConfigurations {
     @PostConstruct
     public void init() {
         Node.setNodeId(nodeId);
-        Node.setNodeName(nodeName);
+        Node.setName(nodeName);
     }
 }
