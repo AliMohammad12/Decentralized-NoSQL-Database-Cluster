@@ -7,7 +7,6 @@ public class Node {
 
     public Node() {
     }
-
     public static String getNodeId() {
         return nodeId;
     }

@@ -39,6 +39,9 @@ public class CollectionServiceImpl implements CollectionService {
         Path path = getPath().
                 resolve(databaseName)
                 .resolve("Collections");
+        if (!FileOperations.isDirectoryExists(path.toString())) {
+            FileOperations.createDirectory(getPath().resolve(databaseName).toString(), "Collections");
+        }
         FileOperations.createDirectory(path.toString(), collection.getName());
         FileOperations.createDirectory(path.resolve(collection.getName()).toString(), "Documents");
         FileOperations.writeJsonAtLocation(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");

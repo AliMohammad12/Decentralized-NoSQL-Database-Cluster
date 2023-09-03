@@ -1,6 +1,8 @@
 package atypon.app.node.service.Impl;
 
 import atypon.app.node.model.Node;
+import atypon.app.node.request.ApiRequest;
+import atypon.app.node.service.services.BroadcastService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -14,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class BroadcastingService {
+public class BroadcastServiceImpl implements BroadcastService  {
     @Autowired
     private RestTemplate restTemplate;
     private final String node1 = "http://node1:8080/Node1";
@@ -30,14 +32,27 @@ public class BroadcastingService {
         urlList.add(node3);
         urlList.add(node4);
     }
-    public <T> void broadcast(T request, String endpoint) {
-
+    public <T extends ApiRequest> void ProtectedBroadcast(T request, String endpoint) {
+        if (request.isBroadcast()) return;
+        request.setBroadcast(true);
         HttpHeaders headers = new HttpHeaders();
-        if (!endpoint.equals("/user/add")) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            UserDetails user = (UserDetails) authentication.getPrincipal();
-            headers.setBasicAuth(user.getUsername(), user.getPassword());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        headers.setBasicAuth(user.getUsername(), user.getPassword());
+        for (String url : urlList) {
+            if (url.substring(18).equals(Node.getName())) continue;
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
+
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    url + endpoint, HttpMethod.POST, requestEntity, String.class);
         }
+    }
+    @Override
+    public <T extends ApiRequest> void UnprotectedBroadcast(T request, String endpoint) {
+        if (request.isBroadcast()) return;
+        request.setBroadcast(true);
+        HttpHeaders headers = new HttpHeaders();
         for (String url : urlList) {
             if (url.substring(18).equals(Node.getName())) continue;
             headers.setContentType(MediaType.APPLICATION_JSON);

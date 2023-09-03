@@ -1,16 +1,16 @@
 package atypon.app.node.controller;
 
-
 import atypon.app.node.model.Database;
-import atypon.app.node.request.DatabaseUpdateRequest;
-import atypon.app.node.response.APIResponse;
+import atypon.app.node.request.database.DatabaseRequest;
+import atypon.app.node.request.database.DatabaseUpdateRequest;
 import atypon.app.node.response.ValidatorResponse;
-import atypon.app.node.service.Impl.BroadcastingService;
+import atypon.app.node.service.services.BroadcastService;
 import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,35 +20,38 @@ import java.util.List;
 
 
 @RestController
+@RequestMapping("/database")
 public class DatabaseController {
     private final DatabaseService databaseService;
     private final ValidatorService validatorService;
-    private final BroadcastingService broadcastingService;
-
+    private final BroadcastService broadcastService;
     @Autowired
     public DatabaseController(DatabaseService databaseService,
                               ValidatorService validatorService,
-                              BroadcastingService broadcastingService) {
+                              BroadcastService broadcastService) {
         this.databaseService = databaseService;
         this.validatorService = validatorService;
-        this.broadcastingService = broadcastingService;
+        this.broadcastService = broadcastService;
     }
-
-    @RequestMapping(value = "/create-database")
-    public ResponseEntity<?> createDatabase(@RequestBody Database database) {
-        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
-        if (validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+    @PostMapping(value = "/create")
+    public ResponseEntity<?> createDatabase(@RequestBody DatabaseRequest request) {
+        Database database = request.getDatabase();
+        if (!request.isBroadcast()) {
+            ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
+            if (validatorResponse.isValid()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+            }
         }
         databaseService.createDatabase(database);
+        broadcastService.ProtectedBroadcast(request, "/database/create");
         return ResponseEntity.ok("Database created successfully!");
     }
-    @RequestMapping(value = "/read-databases")
+    @RequestMapping(value = "/read/all")
     public ResponseEntity<List<String>> readDatabases() {
         List<String> databasesList = databaseService.readDatabases();
         return ResponseEntity.ok(databasesList);
     }
-    @RequestMapping("/read-database")
+    @RequestMapping("/read/database")
     public ResponseEntity<?> readDatabase(@RequestBody Database database) {
         ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
         if (!validatorResponse.isValid()) {
@@ -57,27 +60,35 @@ public class DatabaseController {
         List<String> collectionsList = databaseService.readDatabase(database);
         return ResponseEntity.ok(collectionsList);
     }
-    @RequestMapping("/update-database")
+    @PostMapping("/update")
     public ResponseEntity<?> updateDatabase(@RequestBody DatabaseUpdateRequest request) {
         String oldDatabaseName = request.getOldDatabaseName();
         String newDatabaseName = request.getNewDatabaseName();
-        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(oldDatabaseName);
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
-        }
-        if (validatorService.isDatabaseExists(newDatabaseName).isValid()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+        if (!request.isBroadcast()) {
+            ValidatorResponse oldDbValidatorResponse = validatorService.isDatabaseExists(oldDatabaseName);
+            if (!oldDbValidatorResponse.isValid()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldDbValidatorResponse.getMessage());
+            }
+            ValidatorResponse newDbValidatorResponse = validatorService.isDatabaseExists(newDatabaseName);
+            if (newDbValidatorResponse.isValid()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(newDbValidatorResponse.getMessage());
+            }
         }
         databaseService.updateDatabaseName(oldDatabaseName, newDatabaseName);
+        broadcastService.ProtectedBroadcast(request, "/database/update");
         return ResponseEntity.ok("Database name updated successfully!");
     }
-    @RequestMapping("/delete-database")
-    public ResponseEntity<?> deleteDatabase(@RequestBody Database database) throws IOException {
-        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+    @PostMapping("/delete")
+    public ResponseEntity<?> deleteDatabase(@RequestBody DatabaseRequest request) throws IOException {
+        Database database = request.getDatabase();
+        if (!request.isBroadcast()) {
+            ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
+            if (!validatorResponse.isValid()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+            }
         }
         databaseService.deleteDatabase(database);
+        broadcastService.ProtectedBroadcast(request, "/database/delete");
         return ResponseEntity.ok("Database deleted successfully!");
     }
 }

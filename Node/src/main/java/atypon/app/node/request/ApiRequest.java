@@ -1,6 +1,5 @@
 package atypon.app.node.request;
 
-
 import lombok.Data;
 
 @Data

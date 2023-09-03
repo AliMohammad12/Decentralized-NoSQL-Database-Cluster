@@ -1,5 +1,6 @@
-package atypon.app.node.request;
+package atypon.app.node.request.database;
 
+import atypon.app.node.request.ApiRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

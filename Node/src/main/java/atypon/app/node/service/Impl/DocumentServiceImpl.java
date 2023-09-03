@@ -32,11 +32,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void addDocument(String databaseName, String collectionName, JsonNode document) throws JsonProcessingException {
         ObjectNode objectNode = (ObjectNode) document;
-        String uniqueId = java.util.UUID.randomUUID().toString();
-        objectNode.put("id", uniqueId);
+        if (!objectNode.has("id")) {
+            String uniqueId = java.util.UUID.randomUUID().toString();
+            objectNode.put("id", uniqueId);
+        }
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
-        FileOperations.writeJsonAtLocation(jsonString, path.toString(), uniqueId + ".json");
+        FileOperations.writeJsonAtLocation(jsonString, path.toString(), objectNode.get("id").asText() + ".json");
     }
     @Override
     public JsonNode readDocument(String database, String collection, String id) throws IOException {

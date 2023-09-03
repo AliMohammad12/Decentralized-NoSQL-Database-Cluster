@@ -8,6 +8,6 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Data
-public class NewUserRequest extends ApiRequest {
+public class UserRequest extends ApiRequest {
     private User user;
 }
