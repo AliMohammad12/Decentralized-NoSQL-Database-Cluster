@@ -8,19 +8,22 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
+        <module name="BootstrappingNode" />
         <module name="Client" />
         <module name="Node" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="BootstrapingNode" target="20" />
+      <module name="LoadBalancer" target="17" />
       <module name="Worker" target="20" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="BootstrappingNode" options="-parameters" />
       <module name="Client" options="-parameters" />
       <module name="EurekaServer" options="-parameters" />
+      <module name="LoadBalancer" options="-parameters" />
       <module name="Node" options="-parameters" />
       <module name="Worker" options="" />
     </option>

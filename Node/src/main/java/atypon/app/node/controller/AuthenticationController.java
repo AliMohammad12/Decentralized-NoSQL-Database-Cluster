@@ -18,7 +18,7 @@ public class AuthenticationController {
     public AuthenticationController(AuthenticationServiceImpl authenticationServiceImpl) {
         this.authenticationServiceImpl = authenticationServiceImpl;
     }
-    @PostMapping(path = "/api/v1/auth")
+    @PostMapping(path = "/api/login")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) throws IOException {
         return ResponseEntity.ok(authenticationServiceImpl.authenticate(request));
     }

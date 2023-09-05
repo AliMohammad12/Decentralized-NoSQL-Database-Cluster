@@ -7,11 +7,24 @@ services:
     ports:
       - "8761:8761"
 
+  load-balancer:
+    build: ./LoadBalancer
+    image: load-balancer
+    container_name: load-balancer
+    environment:
+      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
+    ports:
+      - "9000:9000"
+    depends_on:
+      - eureka-server
+    links:
+      - eureka-server
+
   node1:
     build: ./Node
     container_name: node1
     environment:
-      - server.servlet.context-path=/Node1
+#      - server.servlet.context-path=/Node1
       - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
       - NODE_ID=1
       - NODE_NAME=Node1
@@ -29,7 +42,7 @@ services:
     build: ./Node
     container_name: node2
     environment:
-      - server.servlet.context-path=/Node2
+#      - server.servlet.context-path=/Node2
       - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
       - NODE_ID=2
       - NODE_NAME=Node2
@@ -47,7 +60,7 @@ services:
     build: ./Node
     container_name: node3
     environment:
-      - server.servlet.context-path=/Node3
+#      - server.servlet.context-path=/Node3
       - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
       - NODE_ID=3
       - NODE_NAME=Node3
@@ -66,7 +79,7 @@ services:
     build: ./Node
     container_name: node4
     environment:
-      - server.servlet.context-path=/Node4
+#      - server.servlet.context-path=/Node4
       - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
       - NODE_ID=4
       - NODE_NAME=Node4

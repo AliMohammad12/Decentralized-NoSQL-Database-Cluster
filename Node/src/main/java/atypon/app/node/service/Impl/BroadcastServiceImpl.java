@@ -19,10 +19,10 @@ import java.util.List;
 public class BroadcastServiceImpl implements BroadcastService  {
     @Autowired
     private RestTemplate restTemplate;
-    private final String node1 = "http://node1:8080/Node1";
-    private final String node2 = "http://node2:8080/Node2";
-    private final String node3 = "http://node3:8080/Node3";
-    private final String node4 = "http://node4:8080/Node4";
+    private final String node1 = "http://node1:8080";
+    private final String node2 = "http://node2:8080";
+    private final String node3 = "http://node3:8080";
+    private final String node4 = "http://node4:8080";
     private List<String> urlList;
     @PostConstruct
     public void init() {
@@ -40,7 +40,7 @@ public class BroadcastServiceImpl implements BroadcastService  {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         headers.setBasicAuth(user.getUsername(), user.getPassword());
         for (String url : urlList) {
-            if (url.substring(18).equals(Node.getName())) continue;
+            if (url.substring(12).equals(Node.getName())) continue;
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
@@ -54,7 +54,7 @@ public class BroadcastServiceImpl implements BroadcastService  {
         request.setBroadcast(true);
         HttpHeaders headers = new HttpHeaders();
         for (String url : urlList) {
-            if (url.substring(18).equals(Node.getName())) continue;
+            if (url.substring(12).equals(Node.getName())) continue;
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 

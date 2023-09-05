@@ -1,6 +1,7 @@
 package atypon.app.node.controller;
 
 
+import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.request.UserRequest;
 import atypon.app.node.service.Impl.BroadcastServiceImpl;
@@ -25,6 +26,9 @@ public class UserController {
     }
     @PostMapping("/add")
     public String addUser(@RequestBody UserRequest request) throws IOException {
+        if (!request.isBroadcast()) {
+            System.out.println(Node.getName() + " is executing now!");
+        }
         // check if user already exists..
         User user = request.getUser();
         userService.addUser(user.getUsername(), user.getPassword());

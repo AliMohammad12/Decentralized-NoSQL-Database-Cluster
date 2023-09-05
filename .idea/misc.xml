@@ -7,6 +7,10 @@
         <option value="$PROJECT_DIR$/Node/pom.xml" />
         <option value="$PROJECT_DIR$/Client/pom.xml" />
         <option value="$PROJECT_DIR$/EurekaServer/pom.xml" />
+        <option value="$PROJECT_DIR$/BootstrapingNode/pom.xml" />
+        <option value="$PROJECT_DIR$/BootstrappingNode/pom.xml" />
+        <option value="$PROJECT_DIR$/UserAccessMicroservice/pom.xml" />
+        <option value="$PROJECT_DIR$/UserAccessMs/pom.xml" />
       </list>
     </option>
   </component>
