@@ -4,9 +4,15 @@ package atypon.app.node.controller;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.request.UserRequest;
+import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.Impl.BroadcastServiceImpl;
+import atypon.app.node.service.services.BroadcastService;
 import atypon.app.node.service.services.UserService;
+import atypon.app.node.service.services.ValidatorService;
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,21 +24,25 @@ import java.io.IOException;
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
-    private final BroadcastServiceImpl broadcastServiceImpl;
+    private final BroadcastService broadcastService;
+    private final ValidatorService validatorService;
     @Autowired
-    public UserController(UserService userService, BroadcastServiceImpl broadcastServiceImpl) {
+    public UserController(UserService userService,
+                          BroadcastService broadcastService,
+                          ValidatorService validatorService) {
         this.userService = userService;
-        this.broadcastServiceImpl = broadcastServiceImpl;
+        this.broadcastService = broadcastService;
+        this.validatorService = validatorService;
     }
-    @PostMapping("/add")
-    public String addUser(@RequestBody UserRequest request) throws IOException {
-        if (!request.isBroadcast()) {
-            System.out.println(Node.getName() + " is executing now!");
-        }
-        // check if user already exists..
+    @PostMapping("/register")
+    public ResponseEntity<String> addUser(@RequestBody UserRequest request) throws IOException {
         User user = request.getUser();
+        ValidatorResponse validatorResponse = validatorService.isUsernameExists(user.getUsername());
+        if (validatorResponse.isValid()) {
+            return ResponseEntity.ok(validatorResponse.getMessage());
+        }
         userService.addUser(user.getUsername(), user.getPassword());
-        broadcastServiceImpl.UnprotectedBroadcast(request, "/user/add");
-        return "User registered: " + user.getUsername();
+        broadcastService.UnprotectedBroadcast(request, "/user/register");
+        return ResponseEntity.ok("The user " + user.getUsername() + " was registered successfully!");
     }
 }

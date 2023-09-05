@@ -40,7 +40,7 @@ public class BroadcastServiceImpl implements BroadcastService  {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         headers.setBasicAuth(user.getUsername(), user.getPassword());
         for (String url : urlList) {
-            if (url.substring(12).equals(Node.getName())) continue;
+            if (Node.getNodeId().equals(String.valueOf(url.charAt(11)))) continue;
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
@@ -54,12 +54,13 @@ public class BroadcastServiceImpl implements BroadcastService  {
         request.setBroadcast(true);
         HttpHeaders headers = new HttpHeaders();
         for (String url : urlList) {
-            if (url.substring(12).equals(Node.getName())) continue;
+            if (Node.getNodeId().equals(String.valueOf(url.charAt(11)))) continue;
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
             ResponseEntity<String> responseEntity = restTemplate.exchange(
                     url + endpoint, HttpMethod.POST, requestEntity, String.class);
         }
+        System.out.println();
     }
 }

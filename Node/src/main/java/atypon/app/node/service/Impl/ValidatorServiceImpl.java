@@ -1,7 +1,9 @@
 package atypon.app.node.service.Impl;
 
 import atypon.app.node.model.Node;
+import atypon.app.node.model.User;
 import atypon.app.node.response.ValidatorResponse;
+import atypon.app.node.security.MyUserDetails;
 import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,15 +15,16 @@ import com.networknt.schema.ValidationMessage;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 
 @Service
 public class ValidatorServiceImpl implements ValidatorService {
-
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -30,6 +33,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDatabaseExists(String databaseName) {
+        // todo: fix this
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
         Path path = getPath().resolve(databaseName);
@@ -50,6 +54,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             return validateDatabase;
         }
 
+        // todo: fix this
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
@@ -62,13 +67,12 @@ public class ValidatorServiceImpl implements ValidatorService {
         }
         return validatorResponse;
     }
-
     @Override
     public ValidatorResponse isDocumentValid(String database, String collection, JsonNode targetDocument) {
         // let json service do some action here
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
+        ObjectMapper objectMapper = new ObjectMapper();
 
         File collectionsDir = new File(path.toString());
         File schemaFile = new File(collectionsDir, "schema.json");
@@ -90,7 +94,6 @@ public class ValidatorServiceImpl implements ValidatorService {
         validatorResponse.setMessage(validatorMessage);
         return validatorResponse;
     }
-
     @Override
     public ValidatorResponse isDocumentExists(String database, String collection, String id) {
         ValidatorResponse validateCollection = isCollectionExists(database, collection);
@@ -102,9 +105,20 @@ public class ValidatorServiceImpl implements ValidatorService {
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("The requested document within " + collection + " exists !");
         } else {
-            validatorResponse.setMessage("The requested document within " + collection + " doesnt exist !");
+            validatorResponse.setMessage("The requested document within " + collection + " doesn't exist !");
         }
         return validatorResponse;
     }
-
+    @Override
+    public ValidatorResponse isUsernameExists(String username) throws IOException {
+        File jsonFile = new File("Storage/" + Node.getName() + "/Users.json");
+        ObjectMapper objectMapper = new ObjectMapper();
+        User[] users = objectMapper.readValue(jsonFile, User[].class);
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                return new ValidatorResponse("User with the name " + username + " exists!", true);
+            }
+        }
+        return new ValidatorResponse("User with the name " + username + " doesn't exist!", false);
+    }
 }

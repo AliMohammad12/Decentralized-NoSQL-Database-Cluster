@@ -10,25 +10,45 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
-        backdrop-filter: blur(5px); /* Adjust the blur value as needed */
-        z-index: 9998; /* Ensure it appears above other content, but below the loading message */
-        display: none; /* Initially hidden */
+        background-color: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 9998;
+        display: none;
     }
 
     #loading-message {
-        font-size: 50px; /* Adjust the font size as needed */
+        font-size: 50px;
         text-align: center;
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        z-index: 9999; /* Ensure it appears above other content */
-        display: none; /* Initially hidden */
+        z-index: 9999;
+        display: none;
     }
   </style>
 </head>
 <body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" >NoSQL Database Cluster</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <form action="#" th:action="@{/logout}" method="POST">
+            <button type="submit" class="logout-button">Logout</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
 <div class="container mt-5">
   <h1 class="mb-4">
     Cluster Status
@@ -73,6 +93,10 @@
     </tr>
     </tbody>
   </table>
+
+  <div th:if="${clusterStatus}">
+    <p>For more details: <a href="http://localhost:8761/" target="_blank">Eureka Server</a></p>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
@@ -83,9 +107,9 @@
         const loadingAction = document.getElementById('loading-action');
 
         if (loadingMessage && loadingOverlay && loadingAction) {
-            loadingMessage.style.display = 'block'; // Show the loading message
-            loadingOverlay.style.display = 'block'; // Show the overlay
-            loadingAction.innerText = action; // Set the action text dynamically
+            loadingMessage.style.display = 'block';
+            loadingOverlay.style.display = 'block';
+            loadingAction.innerText = action;
         }
 
         let dots = 0;
@@ -96,8 +120,8 @@
             }
             const progressDots = '.'.repeat(dots);
             loadingMessage.innerHTML = `<span style="color: black;">Cluster is ${action}${progressDots}.</span>`;
-            dots = (dots + 1) % 4; // Cycle through 0, 1, 2, 3
-        }, 1000); // Update every second
+            dots = (dots + 1) % 4;
+        }, 1000);
     }
 </script>
 </body>

@@ -9,12 +9,12 @@
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
         <module name="BootstrappingNode" />
+        <module name="LoadBalancer" />
         <module name="Client" />
         <module name="Node" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="LoadBalancer" target="17" />
       <module name="Worker" target="20" />
     </bytecodeTargetLevel>
   </component>

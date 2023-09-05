@@ -12,8 +12,9 @@
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">Decentralized NoSql Db Cluster</a>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">NoSql Database</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -21,7 +22,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-                <a class="nav-link admin-link" th:href="@{/admin/login}">ADMIN LOGIN</a>
+                <a class="nav-link admin-link" th:href="@{/admin/login}">Admin Login</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link register-link" th:href="@{/register}">Register User</a>
             </li>
         </ul>
     </div>
@@ -32,9 +36,15 @@
         <div class="col-md-6 offset-md-3">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="text-center">Registration</h2>
+                    <h2 class="text-center">User Registration</h2>
                 </div>
                 <div class="card-body">
+                    <div th:if="${errorMessage}" class="alert alert-danger">
+                        <p th:text="${errorMessage}"></p>
+                    </div>
+                    <div th:if="${successMessage}" class="alert alert-success">
+                        <p th:text="${successMessage}"></p>
+                    </div>
                     <form th:action="@{/register}" method="post">
                         <div class="form-group">
                             <label for="username">Username</label>
