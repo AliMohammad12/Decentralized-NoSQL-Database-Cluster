@@ -2,7 +2,7 @@ package atypon.cluster.client.service;
 
 import atypon.cluster.client.dbmodels.DatabaseInfo;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
-import atypon.cluster.client.exception.InvalidCredentialsException;
+import atypon.cluster.client.exception.InvalidUserCredentialsException;
 import atypon.cluster.client.dbmodels.Database;
 import atypon.cluster.client.dbmodels.Node;
 import atypon.cluster.client.dbmodels.UserInfo;
@@ -31,7 +31,7 @@ public class ClusterDatabaseService {
         this.restTemplate = restTemplate;
     }
     @PostConstruct
-    public void init() {
+    public void init() { // create new method called CreateDatabase
         String url = "http://localhost:"+Node.getPort()+"/database/create";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -41,14 +41,14 @@ public class ClusterDatabaseService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(databaseRequest, headers);
         DatabaseInfo.setName(databaseName);
         try {
-            ResponseEntity<?> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+            restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
             logger.info("Database with the name '" + databaseName + "' has been successfully created and will be utilized.");
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode().value() == 400) {
                 logger.warn("An existing database with the name '" + databaseName + "' has been found and will be utilized.");
             } else if (e.getStatusCode().value() == 401) {
                 logger.error("Invalid credentials! Please use correct credentials!");
-                throw new InvalidCredentialsException();
+                throw new InvalidUserCredentialsException();
             } else {
                 logger.error("There's an issue within the cluster, please try connecting later!");
                 throw new ClusterOperationalIssueException();

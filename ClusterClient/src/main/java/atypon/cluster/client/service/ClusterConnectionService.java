@@ -1,7 +1,7 @@
 package atypon.cluster.client.service;
 
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
-import atypon.cluster.client.exception.InvalidCredentialsException;
+import atypon.cluster.client.exception.InvalidUserCredentialsException;
 import atypon.cluster.client.dbmodels.Node;
 import atypon.cluster.client.dbmodels.NodeInfo;
 import atypon.cluster.client.dbmodels.User;
@@ -16,14 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
-
 @Component
 public class ClusterConnectionService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
     private final RestTemplate restTemplate;
     private String username;
     private String password;
-
     @Autowired
     public ClusterConnectionService(
             RestTemplate restTemplate,
@@ -33,12 +31,10 @@ public class ClusterConnectionService {
         this.username = username;
         this.password = password;
     }
-
     @PostConstruct
     public void init() {
         connect();
     }
-
     public void connect() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -57,7 +53,7 @@ public class ClusterConnectionService {
             logger.info("User '" + username + "' has been successfully connected to the cluster!");
         } catch (HttpClientErrorException e) {
             logger.error("Invalid credentials! Please use correct credentials!");
-            throw new InvalidCredentialsException();
+            throw new InvalidUserCredentialsException();
         } catch (HttpServerErrorException e) {
             logger.error("There's an issue within the cluster, please try connecting later!");
             throw new ClusterOperationalIssueException();

@@ -1,0 +1,17 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "type" : "object",
+  "properties" : {
+    "name" : {
+      "type" : "string"
+    },
+    "salary" : {
+      "type" : "double"
+    },
+    "age" : {
+      "type" : "integer"
+    }
+  },
+  "required" : [ "name", "salary", "age" ],
+  "additionalProperties" : false
+}
