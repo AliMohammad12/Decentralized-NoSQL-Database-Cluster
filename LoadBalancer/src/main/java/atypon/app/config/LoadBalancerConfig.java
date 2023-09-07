@@ -13,9 +13,9 @@ public class LoadBalancerConfig {
         return new RestTemplate();
     }
 
-    @Bean(name = "loginBean")
+    @Bean(name = "connectionBean")
     @LoadBalanced
-    public RestTemplate loginRestTemplate() {
+    public RestTemplate connectionRestTemplate() {
         return new RestTemplate();
     }
 }

@@ -13,6 +13,7 @@ import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,10 +40,11 @@ public class UserController {
         User user = request.getUser();
         ValidatorResponse validatorResponse = validatorService.isUsernameExists(user.getUsername());
         if (validatorResponse.isValid()) {
-            return ResponseEntity.ok(validatorResponse.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
         userService.addUser(user.getUsername(), user.getPassword());
         broadcastService.UnprotectedBroadcast(request, "/user/register");
         return ResponseEntity.ok("The user " + user.getUsername() + " was registered successfully!");
     }
+
 }

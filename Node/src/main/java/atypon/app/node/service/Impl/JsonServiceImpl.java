@@ -1,5 +1,8 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.model.Node;
+import atypon.app.node.model.User;
+import atypon.app.node.security.MyUserDetails;
 import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +16,7 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -90,6 +94,24 @@ public class JsonServiceImpl implements JsonService {
             }
         }
         return documentsArray;
+    }
+    @Override
+    public User findByUsername(String username) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        File jsonFile = new File("Storage/" + Node.getName() + "/Users.json");
+        if (!jsonFile.exists()) {
+            return null;
+        }
+
+        User[] users = objectMapper.readValue(jsonFile, User[].class);
+
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                return user;
+            }
+        }
+        return null;
     }
     @Override
     public JsonNode readJsonNode(String path) throws IOException {

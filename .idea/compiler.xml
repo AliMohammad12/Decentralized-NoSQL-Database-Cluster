@@ -10,6 +10,7 @@
         <module name="EurekaServer" />
         <module name="BootstrappingNode" />
         <module name="LoadBalancer" />
+        <module name="ClusterClient" />
         <module name="Client" />
         <module name="Node" />
       </profile>
@@ -22,6 +23,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="BootstrappingNode" options="-parameters" />
       <module name="Client" options="-parameters" />
+      <module name="ClusterClient" options="-parameters" />
       <module name="EurekaServer" options="-parameters" />
       <module name="LoadBalancer" options="-parameters" />
       <module name="Node" options="-parameters" />

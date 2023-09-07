@@ -4,6 +4,8 @@
     <file url="file://$PROJECT_DIR$/BootstrappingNode/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/BootstrappingNode/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ClusterClient/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ClusterClient/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/EurekaServer/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/EurekaServer/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/LoadBalancer/src/main/java" charset="UTF-8" />

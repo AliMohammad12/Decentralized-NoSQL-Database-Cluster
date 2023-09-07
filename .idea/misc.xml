@@ -12,6 +12,7 @@
         <option value="$PROJECT_DIR$/UserAccessMicroservice/pom.xml" />
         <option value="$PROJECT_DIR$/UserAccessMs/pom.xml" />
         <option value="$PROJECT_DIR$/LoadBalancer/pom.xml" />
+        <option value="$PROJECT_DIR$/ClusterClient/pom.xml" />
       </list>
     </option>
   </component>

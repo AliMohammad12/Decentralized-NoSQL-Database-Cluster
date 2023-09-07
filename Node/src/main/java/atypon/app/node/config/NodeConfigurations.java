@@ -11,9 +11,12 @@ public class NodeConfigurations {
     private String nodeId;
     @Value("${node_name}")
     private String nodeName;
+    @Value("${node_port}")
+    private String nodePort;
     @PostConstruct
     public void init() {
         Node.setNodeId(nodeId);
         Node.setName(nodeName);
+        Node.setPort(nodePort);
     }
 }

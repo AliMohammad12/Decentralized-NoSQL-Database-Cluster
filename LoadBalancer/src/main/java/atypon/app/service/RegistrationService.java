@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.sql.SQLOutput;
 
 @Service
 public class RegistrationService {
@@ -19,12 +22,12 @@ public class RegistrationService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Object> requestEntity = new HttpEntity<>(userRequest, headers);
-        ResponseEntity<String> responseEntity =  registrationRestTemplate.exchange(
-                "http://NODE/user/register", HttpMethod.POST, requestEntity, String.class);
 
-        System.out.println("HERRRRRRRRRRREEEEEEE = " + requestEntity.getBody());
-        return responseEntity;
-//        return registrationRestTemplate.exchange(
-//            "http://NODE/user/register", HttpMethod.POST, requestEntity, String.class);
+        try {
+            return registrationRestTemplate.exchange(
+                    "http://NODE/user/register", HttpMethod.POST, requestEntity, String.class);
+        } catch (HttpClientErrorException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
     }
 }
