@@ -31,7 +31,10 @@ public class ClusterDatabaseService {
         this.restTemplate = restTemplate;
     }
     @PostConstruct
-    public void init() { // create new method called CreateDatabase
+    public void init() {
+        createDatabase();
+    }
+    public void createDatabase() { // make it load-balanced.
         String url = "http://localhost:"+Node.getPort()+"/database/create";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

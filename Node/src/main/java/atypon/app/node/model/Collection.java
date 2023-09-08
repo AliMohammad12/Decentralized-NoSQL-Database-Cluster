@@ -6,8 +6,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-@Getter
 public class Collection {
     private String name;
     private Database database;

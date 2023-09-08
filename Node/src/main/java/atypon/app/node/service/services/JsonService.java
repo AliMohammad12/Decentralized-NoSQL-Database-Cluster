@@ -1,5 +1,6 @@
 package atypon.app.node.service.services;
 
+import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.model.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,4 +21,5 @@ public interface JsonService {
     JsonNode readJsonNode(String path) throws IOException;
 
     User findByUsername(String username) throws IOException;
+    String getPropertyTypeFromSchema(IndexObject indexObject);
 }

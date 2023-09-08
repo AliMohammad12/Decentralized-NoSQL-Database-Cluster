@@ -9,8 +9,6 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-@Getter
 public class CollectionSchema {
     private Map<String, Object> fields;
     private Collection collection;

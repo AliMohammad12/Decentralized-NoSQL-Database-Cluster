@@ -36,7 +36,7 @@ public class UserController {
         this.validatorService = validatorService;
     }
     @PostMapping("/register")
-    public ResponseEntity<String> addUser(@RequestBody UserRequest request) throws IOException {
+    public ResponseEntity<String> registerUser(@RequestBody UserRequest request) throws IOException {
         User user = request.getUser();
         ValidatorResponse validatorResponse = validatorService.isUsernameExists(user.getUsername());
         if (validatorResponse.isValid()) {

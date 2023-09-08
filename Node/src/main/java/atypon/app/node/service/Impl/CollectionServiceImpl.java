@@ -8,6 +8,7 @@ import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,7 +48,7 @@ public class CollectionServiceImpl implements CollectionService {
         FileOperations.writeJsonAtLocation(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");
     }
     @Override
-    public JsonNode readCollection(Collection collection) {
+    public ArrayNode readCollection(Collection collection) {
         Path path = getPath().
                 resolve(collection.getDatabase().getName()).
                 resolve("Collections").

@@ -37,6 +37,6 @@ public class UserServiceImpl implements UserService {
         objectMapper.writeValue(jsonFile, usersList);
 
         FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users", username);
-        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users/"+username, "Databases");
+        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users/"+ username, "Databases");
     }
 }

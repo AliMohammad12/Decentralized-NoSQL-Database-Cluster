@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class qwer {
+public class NewC {
     private String name;
     private int age;
     private double salary;
+    private boolean hey;
 }

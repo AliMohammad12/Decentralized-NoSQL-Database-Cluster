@@ -1,5 +1,6 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.security.MyUserDetails;
@@ -16,16 +17,26 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
 @Service
 public class JsonServiceImpl implements JsonService {
+    private static Path getPath() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        Path path = Path.of("Storage", Node.getName(), "Users", user.getUsername(), "Databases");
+        return path;
+    }
     @Override
     public JsonNode generateJsonSchema(Class<?> clazz) {
         SchemaGeneratorConfigBuilder configBuilder =
@@ -60,6 +71,12 @@ public class JsonServiceImpl implements JsonService {
         for (Map.Entry<String, Object> entry : properties.entrySet()) {
             ObjectNode propertyNode = objectMapper.createObjectNode();
             String propertyType = entry.getValue().getClass().getSimpleName().toLowerCase();
+            if (propertyType.equals("double") || propertyType.equals("float")) {
+                propertyType = "number";
+            }
+            if (propertyType.equals("long")) {
+                propertyType = "integer";
+            }
             propertyNode.put("type", propertyType);
             propertiesNode.set(entry.getKey(), propertyNode);
             requiredArray.add(entry.getKey());
@@ -113,6 +130,25 @@ public class JsonServiceImpl implements JsonService {
         }
         return null;
     }
+
+    @Override
+    public String getPropertyTypeFromSchema(IndexObject indexObject) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String database = indexObject.getDatabase();
+        String collection = indexObject.getCollection();
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
+
+        File collectionsDir = new File(path.toString());
+        File schemaFile = new File(collectionsDir, "schema.json");
+
+        JsonSchemaFactory schemaFactory = JsonSchemaFactory.builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909)).objectMapper(objectMapper).build();
+        JsonSchema schema = schemaFactory.getSchema(new File(schemaFile.getAbsolutePath()).toURI());
+
+        String property = indexObject.getProperty();
+        JsonNode jsonNode = schema.getSchemaNode().get("properties").get(property).get("type");
+        return jsonNode.asText();
+    }
+
     @Override
     public JsonNode readJsonNode(String path) throws IOException {
         String jsonContent = FileOperations.readFileAsString(path);

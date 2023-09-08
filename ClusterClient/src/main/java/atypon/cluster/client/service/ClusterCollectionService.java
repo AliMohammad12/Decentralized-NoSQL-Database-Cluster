@@ -2,12 +2,10 @@ package atypon.cluster.client.service;
 
 import atypon.cluster.client.dbmodels.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
-import atypon.cluster.client.exception.CollectionCreationException;
 import atypon.cluster.client.exception.CollectionReadException;
-import atypon.cluster.client.exception.InvalidUserCredentialsException;
 import atypon.cluster.client.request.CreateCollectionRequest;
 import atypon.cluster.client.schema.CollectionSchema;
-import atypon.cluster.client.testmodels.qwer;
+import atypon.cluster.client.testmodels.NewC;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,15 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.xml.crypto.Data;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -39,7 +34,7 @@ public class ClusterCollectionService {
 
     @PostConstruct
     public void init() {
-        readCollection(qwer.class);
+        createCollection(NewC.class);
     }
     public void createCollection(Class<?> collectionClass) { // make it load-balanced don't forget
         CollectionSchema collectionSchema = new CollectionSchema();
