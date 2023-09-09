@@ -53,7 +53,6 @@ public class IndexingServiceImpl implements IndexingService {
         String username = user.getUsername();
         return username;
     }
-
     @Override
     public void createIndexing(IndexObject indexObject) throws IOException {
         String type = jsonService.getPropertyTypeFromSchema(indexObject);
@@ -66,7 +65,6 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void indexingInitializer() throws IOException {
-        System.out.println("At init");
         JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Indexing.json").toString());
         for (JsonNode objNode : jsonNode) {
             String username = objNode.get("username").asText();
@@ -112,7 +110,7 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
     @Override
-    public void addDocument(String database, String collection, ObjectNode document) {
+    public void indexDocumentPropertiesIfExists(String database, String collection, ObjectNode document) {
         String username = getUsername();
         String id = document.get("id").asText();
         Iterator<String> iterator = document.fieldNames();
@@ -129,9 +127,8 @@ public class IndexingServiceImpl implements IndexingService {
             }
         }
     }
-
     @Override
-    public void deleteDocument(String database, String collection, Property property) throws IOException {
+    public void deleteDocumentByProperty(String database, String collection, Property property) throws IOException {
         String username = getUsername();
         IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
         BPlusTree bPlusTree = indexRegistry.get(indexObject);
@@ -148,7 +145,9 @@ public class IndexingServiceImpl implements IndexingService {
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
                 for (String id : documentList) {
-                    FileOperations.deleteFile(path.resolve(id + ".json").toString());
+                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
+                    }
                 }
                 bPlusTree.delete(value);
             }
@@ -157,8 +156,9 @@ public class IndexingServiceImpl implements IndexingService {
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
                 for (String id : documentList) {
-                    FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                }
+                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
+                    }                }
                 bPlusTree.delete(value);
             }
         } else if (property.isStringValue()) {
@@ -166,8 +166,9 @@ public class IndexingServiceImpl implements IndexingService {
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
                 for (String id : documentList) {
-                    FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                }
+                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
+                    }                }
                 bPlusTree.delete(value);
             }
         } else if (property.isBooleanValue()) {
@@ -175,11 +176,18 @@ public class IndexingServiceImpl implements IndexingService {
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
                 for (String id : documentList) {
-                    FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                }
+                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
+                    }                }
                 bPlusTree.delete(value);
             }
         }
+    }
+
+    @Override
+    public ArrayNode readDocumentsByProperty(String database, String collection, Property property) {
+
+        return null;
     }
 
     @Override

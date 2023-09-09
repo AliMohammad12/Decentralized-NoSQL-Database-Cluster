@@ -13,6 +13,7 @@ import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,27 +54,68 @@ public class DocumentServiceImpl implements DocumentService {
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
         FileOperations.writeJsonAtLocation(jsonString, path.toString(), objectNode.get("id").asText() + ".json");
-        indexingService.addDocument(databaseName, collectionName, objectNode);
+        indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, objectNode);
     }
     @Override
-    public JsonNode readDocument(String database, String collection, String id) throws IOException {
-        Path path = getPath().resolve(database).resolve("Collections").resolve(collection).resolve("Documents").resolve(id+".json");
-        return jsonService.readJsonNode(path.toString());
-    }
-    @Override
-    public void deleteDocument(DocumentRequestByProperty request) throws IOException {
+    public ArrayNode readDocumentProperty(DocumentRequestByProperty request)  {
         String collectionName = request.getCollection();
         String databaseName = request.getDatabase();
         Property property = request.getProperty();
-
-        // if it's indexed
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
         IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
         if (indexingService.isIndexed(indexObject)) {
-            System.out.println("Inside indexing!!!");
-            indexingService.deleteDocument(databaseName, collectionName, property);
+            return indexingService.readDocumentsByProperty(databaseName, collectionName, property);
+        }
+
+        Path path = getPath().resolve(databaseName)
+                .resolve("Collections")
+                .resolve(collectionName)
+                .resolve("Documents");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayNode documentsArray = objectMapper.createArrayNode();
+        ArrayNode arrayNode = jsonService.readJsonArray(path.toString());
+        for (JsonNode element : arrayNode) {
+            JsonNode propertyNode = element.get(property.getName());
+            if (propertyNode.isBoolean() && property.isBooleanValue()) {
+                boolean value = propertyNode.asBoolean();
+                if (property.getValue().equals(value)) {
+                    documentsArray.add(element);
+                }
+            } else if (propertyNode.isDouble() && property.isDoubleValue()) {
+                double value = propertyNode.asDouble();
+                if (property.getValue().equals(value)) {
+                    documentsArray.add(element);
+                }
+            } else if (propertyNode.isInt() && property.isIntegerValue()) {
+                int value = propertyNode.asInt();
+                if (property.getValue().equals(value)) {
+                    documentsArray.add(element);
+                }
+            } else if (propertyNode.isTextual() && property.isStringValue()) {
+                String value = propertyNode.asText();
+                if (property.getValue().equals(value)) {
+                    documentsArray.add(element);
+                }
+            }
+        }
+        return documentsArray;
+    }
+    @Override
+    public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException {
+        String collectionName = request.getCollection();
+        String databaseName = request.getDatabase();
+        Property property = request.getProperty();
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+
+        // if it's indexed
+        IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
+        if (indexingService.isIndexed(indexObject)) {
+            indexingService.deleteDocumentByProperty(databaseName, collectionName, property);
             return;
         }
 
@@ -84,8 +126,7 @@ public class DocumentServiceImpl implements DocumentService {
 
 
         // todo: must remove the deleted ID's from the tree --> solved: lazy deletion
-        //  when we add, or remove a document through the tree.
-
+        //  when we add a document we iterate at the list and delete the id's that don't exist.
         Collection collection = new Collection(collectionName, new Database(databaseName));
         ArrayNode jsonArray = collectionService.readCollection(collection);
         for (JsonNode element : jsonArray) {

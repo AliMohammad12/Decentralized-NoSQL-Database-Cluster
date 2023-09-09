@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public interface DocumentService {
     void addDocument(String databaseName, String targetCollection, JsonNode document) throws JsonProcessingException;
-    JsonNode readDocument(String database, String collection, String id) throws IOException;
-    void deleteDocument(DocumentRequestByProperty documentRequestByProperty) throws IOException;
+    JsonNode readDocumentProperty(DocumentRequestByProperty documentRequestByProperty) throws IOException;
+    void deleteDocumentByProperty(DocumentRequestByProperty documentRequestByProperty) throws IOException;
     void updateDocument();
 }
