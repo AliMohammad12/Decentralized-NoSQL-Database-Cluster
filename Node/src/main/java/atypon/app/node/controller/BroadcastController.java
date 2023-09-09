@@ -1,15 +1,11 @@
 package atypon.app.node.controller;
 
-import atypon.app.node.model.Collection;
-import atypon.app.node.model.Database;
 import atypon.app.node.request.collection.CollectionRequest;
 import atypon.app.node.request.collection.CollectionUpdateRequest;
 import atypon.app.node.request.collection.CreateCollectionRequest;
 import atypon.app.node.request.database.DatabaseRequest;
 import atypon.app.node.request.database.DatabaseUpdateRequest;
-import atypon.app.node.request.document.AddDocumentRequest;
-import atypon.app.node.response.ValidatorResponse;
-import atypon.app.node.schema.CollectionSchema;
+import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.DocumentService;
@@ -81,7 +77,7 @@ public class BroadcastController {
 
 
     @PostMapping("/document/create")
-    public ResponseEntity<String> addDocument(@RequestBody AddDocumentRequest request) throws JsonProcessingException {
+    public ResponseEntity<String> addDocument(@RequestBody DocumentRequest request) throws JsonProcessingException {
         JsonNode document = request.getDocumentNode();
         String collectionName = document.get("CollectionName").asText();
         String databaseName = document.get("DatabaseName").asText();

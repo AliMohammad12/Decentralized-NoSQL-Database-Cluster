@@ -1,9 +1,11 @@
 package atypon.app.node.service.Impl;
 
 import atypon.app.node.indexing.IndexObject;
+import atypon.app.node.indexing.Property;
 import atypon.app.node.indexing.bplustree.BPlusTree;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
+import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
@@ -121,7 +123,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         return new ValidatorResponse("User with the name " + username + " doesn't exist!", false);
     }
     @Override
-    public ValidatorResponse isIndexValid(IndexObject indexObject) {
+    public ValidatorResponse isIndexCreationAllowed(IndexObject indexObject) {
         String database = indexObject.getDatabase();
         String collection = indexObject.getCollection();
         ValidatorResponse validatorResponse = isCollectionExists(database, collection);
@@ -139,14 +141,63 @@ public class ValidatorServiceImpl implements ValidatorService {
 
         String property = indexObject.getProperty();
 
-
-        System.out.println(indexRegistry.size());
         if (schema.getSchemaNode().get("properties").get(property) == null) {
             return new ValidatorResponse("The requested property doesn't exist in the collection", false);
         }
         if (indexRegistry.containsKey(indexObject)) {
             return new ValidatorResponse("Index for property '" + property + "' already exists!", false);
         }
-        return new ValidatorResponse("Index for property is valid!" , true);
+        return new ValidatorResponse("Index creation for property '" + property + "' is valid!" , true);
+    }
+
+    @Override
+    public ValidatorResponse IsIndexDeletionAllowed(IndexObject indexObject) {
+        String property = indexObject.getProperty();
+        if (indexRegistry.containsKey(indexObject)) {
+            return new ValidatorResponse("Index deletion for property '" + property+ "' is valid!", true);
+        }
+        return new ValidatorResponse("Index deletion for property '" + property + "' is invalid!", false);
+    }
+
+    @Override
+    public ValidatorResponse isDocumentRequestValid(DocumentRequestByProperty documentRequestByProperty) {
+        String database = documentRequestByProperty.getDatabase();
+        String collection = documentRequestByProperty.getCollection();
+
+        ValidatorResponse validatorResponse = isCollectionExists(database, collection);
+        if (!validatorResponse.isValid()) {
+            return validatorResponse;
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
+
+        File collectionsDir = new File(path.toString());
+        File schemaFile = new File(collectionsDir, "schema.json");
+
+        JsonSchemaFactory schemaFactory = JsonSchemaFactory.builder(JsonSchemaFactory.
+                getInstance(SpecVersion.VersionFlag.V201909)).objectMapper(objectMapper).build();
+        JsonSchema schema = schemaFactory.getSchema(new File(schemaFile.getAbsolutePath()).toURI());
+
+        Property property = documentRequestByProperty.getProperty();
+
+        JsonNode jsonNode = schema.getSchemaNode().get("properties").get(property.getName());
+        if (jsonNode == null) {
+            return new ValidatorResponse("The requested property '" + property + "' doesn't exist in the collection!", false);
+        }
+        String type = jsonNode.get("type").asText();
+        boolean valid = false;
+        if (type.equals("string") && property.isStringValue()) {
+            valid = true;
+        } else if (type.equals("integer") && property.isIntegerValue()) {
+            valid = true;
+        } else if (type.equals("number") && property.isDoubleValue()) {
+            valid = true;
+        } else if (type.equals("boolean") && property.isBooleanValue()) {
+            valid = true;
+        } else {
+            return new ValidatorResponse("The type of the property doesn't match the schema type!", false);
+        }
+        return new ValidatorResponse("The document request is valid!", true);
     }
 }

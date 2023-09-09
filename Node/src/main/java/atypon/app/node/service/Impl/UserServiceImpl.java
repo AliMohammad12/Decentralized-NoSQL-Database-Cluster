@@ -7,21 +7,31 @@ import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.CollectionType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
+    private static Path getPath() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+        Path path = Path.of("Storage", Node.getName());
+        return path;
+    }
     @Override
     public void addUser(String username, String password) throws IOException {
         // split this into Reading an array
         // and writing an array to file
 
-        File jsonFile = new File("Storage/"+ Node.getName()+"/Users.json");
+        File jsonFile = new File(getPath().resolve("Users.json").toString());
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         CollectionType listType = objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, User.class);
@@ -36,7 +46,12 @@ public class UserServiceImpl implements UserService {
         usersList.add(new User(username, password));
         objectMapper.writeValue(jsonFile, usersList);
 
-        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users", username);
-        FileOperations.createDirectory("Storage/"+ Node.getName() + "/Users/"+ username, "Databases");
+        FileOperations.createDirectory(getPath().resolve("Users").toString(), username);
+        FileOperations.createDirectory(getPath().resolve("Users").resolve(username).toString(), "Databases");
+        FileOperations.writeJsonAtLocation("[]", getPath().
+                resolve("Users").
+                resolve(username).
+                resolve("Databases").
+                toString(), "Indexing.json");
     }
 }

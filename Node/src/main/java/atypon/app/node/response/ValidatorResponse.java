@@ -11,7 +11,6 @@ public class ValidatorResponse {
         this.message = message;
         this.valid = valid;
     }
-
     public String getMessage() {
         return message;
     }

@@ -1,15 +1,11 @@
 package atypon.app.node.controller;
 
 import atypon.app.node.model.Document;
-import atypon.app.node.model.Node;
 import atypon.app.node.request.DocumentUpdateRequest;
-import atypon.app.node.request.document.AddDocumentRequest;
-import atypon.app.node.response.APIResponse;
+import atypon.app.node.request.document.DocumentRequest;
+import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
-import atypon.app.node.service.services.BroadcastService;
-import atypon.app.node.service.services.DocumentService;
-import atypon.app.node.service.services.JsonService;
-import atypon.app.node.service.services.ValidatorService;
+import atypon.app.node.service.services.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +33,7 @@ public class DocumentController {
         this.broadcastService = broadcastService;
     }
     @PostMapping("/create")
-    public ResponseEntity<String> addDocument(@RequestBody AddDocumentRequest request) throws JsonProcessingException {
+    public ResponseEntity<String> createDocument(@RequestBody DocumentRequest request) throws JsonProcessingException {
         JsonNode document = request.getDocumentNode();
         String collectionName = document.get("CollectionName").asText();
         String databaseName = document.get("DatabaseName").asText();
@@ -53,7 +49,7 @@ public class DocumentController {
             }
         }
         documentService.addDocument(databaseName, collectionName, documentData);
-        broadcastService.ProtectedBroadcast(request, "/document/create");
+      //  broadcastService.ProtectedBroadcast(request, "/document/create");
         return ResponseEntity.status(HttpStatus.OK).body("Document has been added successfully!");
     }
     @RequestMapping("/read")
@@ -65,14 +61,31 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.readDocument(document.getDbName(), document.getCollectionName(), document.getId()));
     }
     @PostMapping("/delete")
-    public ResponseEntity<?> deleteDocument(@RequestBody Document document) throws IOException {
-        ValidatorResponse validatorResponse = validatorService.isDocumentExists(document.getDbName(), document.getCollectionName(), document.getId());
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+    public ResponseEntity<?> deleteDocumentBy(@RequestBody DocumentRequestByProperty request) throws IOException {
+        if (!request.isBroadcast()) {
+            ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
+            if (!documentValidatorResponse.isValid()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
+            }
         }
-        documentService.deleteDocument(document.getDbName(), document.getCollectionName(), document.getId());
+        documentService.deleteDocument(request);
         return ResponseEntity.ok("Document has been deleted successfully!");
     }
+
+//    @PostMapping("/delete") // implement this to delete the document directly
+//    public ResponseEntity<?> deleteDocument(@RequestBody DocumentRequestByProperty request) throws IOException {
+//        if (!request.isBroadcast()) {
+//            ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
+//            if (!documentValidatorResponse.isValid()) {
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
+//            }
+//        }
+//        // delete document where property = X
+//        documentService.deleteDocument(request);
+//        return ResponseEntity.ok("Document has been deleted successfully!");
+//    }
+//
+
     @PostMapping("/update")
     public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest documentUpdateRequest) {
         String id = documentUpdateRequest.getId();
