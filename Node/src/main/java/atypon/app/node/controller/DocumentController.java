@@ -1,6 +1,6 @@
 package atypon.app.node.controller;
 
-import atypon.app.node.request.DocumentUpdateRequest;
+import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
@@ -40,7 +40,7 @@ public class DocumentController {
         if (!request.isBroadcast()) {
             ValidatorResponse collectionValidatorResponse = validatorService.isCollectionExists(databaseName, collectionName);
             if (!collectionValidatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidatorResponse.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidatorResponse.getMessage());
             }
             ValidatorResponse documentValidatorResponse = validatorService.isDocumentValid(databaseName, collectionName, documentData);
             if (!documentValidatorResponse.isValid()) {
@@ -51,9 +51,8 @@ public class DocumentController {
       //  broadcastService.ProtectedBroadcast(request, "/document/create");
         return ResponseEntity.status(HttpStatus.OK).body("Document has been added successfully!");
     }
-
-    @RequestMapping("/read")
-    public ResponseEntity<?> readDocumentByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
+    @RequestMapping("/read-property") // Fully Okay
+    public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
         if (!request.isBroadcast()) {
             ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
             if (!documentValidatorResponse.isValid()) {
@@ -62,20 +61,20 @@ public class DocumentController {
         }
         return ResponseEntity.ok(documentService.readDocumentProperty(request));
     }
-
-
-//    @RequestMapping("/read") / --------> implement this to read the document directly
-//    public ResponseEntity<?> readDocumentById(@RequestBody Document document) throws IOException {
-//        ValidatorResponse validatorResponse = validatorService.isDocumentExists(document.getDbName(), document.getCollectionName(), document.getId());
-//        if (!validatorResponse.isValid()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
-//        }
-//        return ResponseEntity.ok(documentService.readDocument(document.getDbName(), document.getCollectionName(), document.getId()));
-//    }
-
-
-    @PostMapping("/delete") // Fully Ok!
-    public ResponseEntity<?> deleteDocumentByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
+    @RequestMapping("/read-id") // Fully Ok
+    public ResponseEntity<?> readDocumentById(@RequestBody DocumentRequest request) throws IOException {
+        JsonNode document = request.getDocumentNode();
+        String collection = document.get("CollectionName").asText();
+        String database = document.get("DatabaseName").asText();
+        JsonNode documentData = document.get("data");
+        ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
+        if (!validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+        }
+        return ResponseEntity.ok(documentService.readDocumentById(database, collection, documentData));
+    }
+    @PostMapping("/delete-property") // Fully Okay!
+    public ResponseEntity<?> deleteDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
         if (!request.isBroadcast()) {
             ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
             if (!documentValidatorResponse.isValid()) {
@@ -85,29 +84,32 @@ public class DocumentController {
         documentService.deleteDocumentByProperty(request);
         return ResponseEntity.ok("Document has been deleted successfully!");
     }
-
-//    @PostMapping("/delete") / -----------> implement this to delete the document directly
-//    public ResponseEntity<?> deleteDocumentById(@RequestBody DocumentRequestByProperty request) throws IOException {
-//        if (!request.isBroadcast()) {
-//            ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
-//            if (!documentValidatorResponse.isValid()) {
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
-//            }
-//        }
-//        // delete document where property = X
-//        documentService.deleteDocument(request);
-//        return ResponseEntity.ok("Document has been deleted successfully!");
-//    }
-//
-
-    @PostMapping("/update")
-    public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest documentUpdateRequest) {
-        String id = documentUpdateRequest.getId();
-        JsonNode newDocumentNode = documentUpdateRequest.getDocument();
-        // 1- check if id exists by using indexing
-        /// -- wait a little
-
-        documentService.updateDocument();
+    @RequestMapping("/delete-id") // Fully Ok
+    public ResponseEntity<?> deleteDocumentById(@RequestBody DocumentRequest request) throws IOException {
+        JsonNode document = request.getDocumentNode();
+        String collection = document.get("CollectionName").asText();
+        String database = document.get("DatabaseName").asText();
+        JsonNode documentData = document.get("data");
+        ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
+        if (!validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+        }
+        documentService.deleteDocumentById(database, collection, documentData);
         return ResponseEntity.ok("Document has been deleted successfully!");
+    }
+    @PostMapping("/update")
+    public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) throws IOException {
+        JsonNode document = request.getUpdateRequest();
+        String collection = document.get("CollectionName").asText();
+        String database = document.get("DatabaseName").asText();
+        JsonNode documentInfo = document.get("info");
+        JsonNode documentData = document.get("data");
+        ValidatorResponse validatorResponse = validatorService
+                .isDocumentUpdateRequestValid(database, collection, documentData, documentInfo);
+        if (!validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+        }
+        documentService.updateDocument(request);
+        return ResponseEntity.ok("Document has been updated successfully!");
     }
 }

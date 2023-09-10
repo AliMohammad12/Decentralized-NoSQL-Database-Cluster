@@ -11,6 +11,7 @@ import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,11 +99,15 @@ public class ValidatorServiceImpl implements ValidatorService {
         return validatorResponse;
     }
     @Override
-    public ValidatorResponse isDocumentExists(String database, String collection, String id) {
+    public ValidatorResponse isDocumentExists(String database, String collection, JsonNode document) {
         ValidatorResponse validateCollection = isCollectionExists(database, collection);
         if (!validateCollection.isValid()) {
             return validateCollection;
         }
+        if (document.get("id") == null) {
+            return new ValidatorResponse("Invalid Document, Please send the Id!", false);
+        }
+        String id = document.get("id").asText();
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection).resolve("Documents").resolve(id + ".json");
         ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isFileExists(path.toString()));
         if (validatorResponse.isValid()) {
@@ -109,6 +116,51 @@ public class ValidatorServiceImpl implements ValidatorService {
             validatorResponse.setMessage("The requested document within " + collection + " doesn't exist !");
         }
         return validatorResponse;
+    }
+    @Override
+    public ValidatorResponse isDocumentUpdateRequestValid(String database, String collection, JsonNode documentData, JsonNode documentInfo) {
+        ValidatorResponse validatorResponse = isDocumentExists(database, collection, documentInfo);
+        if (!validatorResponse.isValid()) {
+            return validatorResponse;
+        }
+        if (documentInfo.get("version") == null) {
+            return new ValidatorResponse("Update request invalid, Please include the 'version' in the document info", false);
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
+
+        File collectionsDir = new File(path.toString());
+        File schemaFile = new File(collectionsDir, "schema.json");
+
+        JsonSchemaFactory schemaFactory = JsonSchemaFactory.builder(JsonSchemaFactory.
+                getInstance(SpecVersion.VersionFlag.V201909)).objectMapper(objectMapper).build();
+        JsonSchema schema = schemaFactory.getSchema(new File(schemaFile.getAbsolutePath()).toURI());
+
+        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = documentData.fields();
+        while (fieldsIterator.hasNext()) {
+            Map.Entry<String, JsonNode> field = fieldsIterator.next();
+            String fieldName = field.getKey();
+            JsonNode fieldValue = field.getValue();
+
+            JsonNode jsonNode = schema.getSchemaNode().get("properties").get(fieldName);
+            if (jsonNode == null) {
+                return new ValidatorResponse("The requested property '" + fieldName + "' doesn't exist in the collection!", false);
+            }
+            String type = jsonNode.get("type").asText();
+            boolean valid = false;
+            if (type.equals("string") && fieldValue.isTextual()) {
+                valid = true;
+            } else if (type.equals("integer") && fieldValue.isInt()) {
+                valid = true;
+            } else if (type.equals("number") && fieldValue.isDouble()) {
+                valid = true;
+            } else if (type.equals("boolean") && fieldValue.isBoolean()) {
+                valid = true;
+            } else {
+                return new ValidatorResponse("The type of the property '{"+ fieldName + ", " + fieldValue + "}' doesn't match the schema type '" + type + "'!", false);
+            }
+        }
+        return new ValidatorResponse("Update request valid!", true);
     }
     @Override
     public ValidatorResponse isUsernameExists(String username) throws IOException {
@@ -186,6 +238,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             return new ValidatorResponse("The requested property '" + property + "' doesn't exist in the collection!", false);
         }
         String type = jsonNode.get("type").asText();
+
         boolean valid = false;
         if (type.equals("string") && property.isStringValue()) {
             valid = true;
@@ -196,7 +249,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         } else if (type.equals("boolean") && property.isBooleanValue()) {
             valid = true;
         } else {
-            return new ValidatorResponse("The type of the property doesn't match the schema type!", false);
+            return new ValidatorResponse("The type of the property '"+ property +"'doesn't match the schema type '" + type + "'!", false);
         }
         return new ValidatorResponse("The document request is valid!", true);
     }

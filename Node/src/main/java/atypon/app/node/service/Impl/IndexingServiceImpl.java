@@ -117,6 +117,7 @@ public class IndexingServiceImpl implements IndexingService {
         while (iterator.hasNext()) {
             String field = iterator.next();
             if (field.equals("id")) continue;
+            if (field.equals("version")) continue;
             IndexObject indexObject = new IndexObject(username, database, collection, field);
             String type = jsonService.getPropertyTypeFromSchema(indexObject);
             JsonNode node = document.get(field);
@@ -129,6 +130,7 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void deleteDocumentByProperty(String database, String collection, Property property) throws IOException {
+        System.out.println("Inside Delete Indexing!");
         String username = getUsername();
         IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
         BPlusTree bPlusTree = indexRegistry.get(indexObject);
@@ -144,55 +146,146 @@ public class IndexingServiceImpl implements IndexingService {
             int value = (int) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                for (String id : documentList) {
-                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                    }
-                }
+                deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
         } else if (property.isDoubleValue()) {
             double value = (double) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                for (String id : documentList) {
-                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                    }                }
+                deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
         } else if (property.isStringValue()) {
             String value = (String) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                for (String id : documentList) {
-                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                    }                }
+                deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
         } else if (property.isBooleanValue()) {
             boolean value = (boolean) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                for (String id : documentList) {
-                    if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                        FileOperations.deleteFile(path.resolve(id + ".json").toString());
-                    }                }
+                deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
         }
     }
-
     @Override
-    public ArrayNode readDocumentsByProperty(String database, String collection, Property property) {
+    public ArrayNode readDocumentsByProperty(String database, String collection, Property property) throws IOException {
+        System.out.println("Inside Read Indexing!");
+        String username = getUsername();
+        IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
+        BPlusTree bPlusTree = indexRegistry.get(indexObject);
+        Path path = getPath()
+                .resolve("Databases")
+                .resolve(database)
+                .resolve("Collections")
+                .resolve(collection)
+                .resolve("Documents");
 
-        return null;
+        List<String> documentList = null;
+        if (property.isIntegerValue()) {
+            int value = (int) property.getValue();
+            documentList = (List<String>) bPlusTree.search(value);
+
+        } else if (property.isDoubleValue()) {
+            double value = (double) property.getValue();
+            documentList = (List<String>) bPlusTree.search(value);
+
+        } else if (property.isStringValue()) {
+            String value = (String) property.getValue();
+            documentList = (List<String>) bPlusTree.search(value);
+
+        } else if (property.isBooleanValue()) {
+            boolean value = (boolean) property.getValue();
+            documentList = (List<String>) bPlusTree.search(value);
+        }
+        return readDocuments(path, documentList);
     }
-
     @Override
     public boolean isIndexed(IndexObject indexObject) {
         return indexRegistry.containsKey(indexObject);
+    }
+
+    @Override
+    public void updateIndexing(String id, JsonNode newValue, JsonNode oldValue, IndexObject indexObject){
+        BPlusTree bPlusTree = indexRegistry.get(indexObject);
+        String type = jsonService.getPropertyTypeFromSchema(indexObject);
+
+        List<String> listNew = null;
+        List<String> listOld = null;
+        switch (type) {
+            case "string":
+                String newValueString = newValue.asText();
+                String oldValueString = oldValue.asText();
+                listNew = (List<String>) bPlusTree.search(newValueString);
+                listOld = (List<String>) bPlusTree.search(oldValueString);
+                listOld.remove(id);
+                if (listOld.isEmpty()) {
+                    bPlusTree.delete(oldValueString);
+                }
+                if (listNew == null) {
+                    listNew = new ArrayList<>();
+                    listNew.add(id);
+                    bPlusTree.insert(newValueString, listNew);
+                } else {
+                    listNew.add(id);
+                }
+                break;
+            case "integer":
+                int newValueInt = newValue.asInt();
+                int oldValueInt = oldValue.asInt();
+                listNew = (List<String>) bPlusTree.search(newValueInt);
+                listOld = (List<String>) bPlusTree.search(oldValueInt);
+                listOld.remove(id);
+                if (listOld.isEmpty()) {
+                    bPlusTree.delete(oldValueInt);
+                }
+                if (listNew == null) {
+                    listNew = new ArrayList<>();
+                    listNew.add(id);
+                    bPlusTree.insert(newValueInt, listNew);
+                } else {
+                    listNew.add(id);
+                }
+                break;
+            case "number":
+                double newValueDouble = newValue.asDouble();
+                double oldValueDouble = oldValue.asDouble();
+                listNew = (List<String>) bPlusTree.search(newValueDouble);
+                listOld = (List<String>) bPlusTree.search(oldValueDouble);
+                listOld.remove(id);
+                if (listOld.isEmpty()) {
+                    bPlusTree.delete(oldValueDouble);
+                }
+                if (listNew == null) {
+                    listNew = new ArrayList<>();
+                    listNew.add(id);
+                    bPlusTree.insert(newValueDouble, listNew);
+                } else {
+                    listNew.add(id);
+                }
+                break;
+            case "boolean":
+                boolean newValueBoolean = newValue.asBoolean();
+                boolean oldValueBoolean = oldValue.asBoolean();
+                listNew = (List<String>) bPlusTree.search(newValueBoolean);
+                listOld = (List<String>) bPlusTree.search(oldValueBoolean);
+                listOld.remove(id);
+                if (listOld.isEmpty()) {
+                    bPlusTree.delete(oldValueBoolean);
+                }
+                if (listNew == null) {
+                    listNew = new ArrayList<>();
+                    listNew.add(id);
+                    bPlusTree.insert(newValueBoolean, listNew);
+                } else {
+                    listNew.add(id);
+                }
+                break;
+        }
     }
     @Override
     public void setupIndexing(IndexObject indexObject, BPlusTree bPlusTree, String type) {
@@ -204,6 +297,31 @@ public class IndexingServiceImpl implements IndexingService {
             String id = element.get("id").asText();
             addDocumentToTree(bPlusTree, id, type, propertyNode);
         }
+    }
+    public void deleteDocuments(Path path, List<String> documentList) throws IOException {
+        for (String id : documentList) {
+            if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                FileOperations.deleteFile(path.resolve(id + ".json").toString());
+            }
+        }
+    }
+    public ArrayNode readDocuments(Path path, List<String> documentList) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayNode documents = objectMapper.createArrayNode();
+
+        if (documentList != null) {
+            Iterator<String> iterator = documentList.iterator();
+            while (iterator.hasNext()) {
+                String id = iterator.next();
+                String jsonFilePath = path.resolve(id + ".json").toString();
+                if (FileOperations.isFileExists(jsonFilePath)) {
+                    documents.add(jsonService.readJsonNode(jsonFilePath));
+                } else {
+                    iterator.remove(); // --> lazy deletion!
+                }
+            }
+        }
+        return documents;
     }
 
     private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node) {
