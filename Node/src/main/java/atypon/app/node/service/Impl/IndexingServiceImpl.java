@@ -145,31 +145,51 @@ public class IndexingServiceImpl implements IndexingService {
         if (property.isIntegerValue()) {
             int value = (int) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
+            System.out.println("Before Tree -> " + bPlusTree.search(value));
+
             if (documentList != null) {
                 deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
+
+            System.out.println("Deleted from " + property.getName() + " indexing tree to the node with the value " + property.getValue() + "!");
+            System.out.println("Tree -> " + bPlusTree.search(value));
         } else if (property.isDoubleValue()) {
             double value = (double) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
+            System.out.println("Before Tree -> " + bPlusTree.search(value));
+
             if (documentList != null) {
                 deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
+
+            System.out.println("Deleted from " + property.getName() + " indexing tree to the node with the value " + property.getValue() + "!");
+            System.out.println("Tree -> " + bPlusTree.search(value));
         } else if (property.isStringValue()) {
             String value = (String) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
+            System.out.println("Before Tree -> " + bPlusTree.search(value));
+
             if (documentList != null) {
                 deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
+
+            System.out.println("Deleted from " + property.getName() + " indexing tree to the node with the value " + property.getValue() + "!");
+            System.out.println("Tree -> " + bPlusTree.search(value));
         } else if (property.isBooleanValue()) {
             boolean value = (boolean) property.getValue();
+            System.out.println("Before Tree -> " + bPlusTree.search(value));
+
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
                 deleteDocuments(path, documentList);
                 bPlusTree.delete(value);
             }
+
+            System.out.println("Deleted from " + property.getName() + " indexing tree to the node with the value " + property.getValue() + "!");
+            System.out.println("After Tree -> " + bPlusTree.search(value));
         }
     }
     @Override
@@ -202,6 +222,8 @@ public class IndexingServiceImpl implements IndexingService {
             boolean value = (boolean) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
         }
+
+        System.out.println("Id's for " + property.getName() + " tree inside the node " + property.getValue() + " are => " + documentList);
         return readDocuments(path, documentList);
     }
     @Override
@@ -220,8 +242,18 @@ public class IndexingServiceImpl implements IndexingService {
             case "string":
                 String newValueString = newValue.asText();
                 String oldValueString = oldValue.asText();
+
+
+                System.out.println("inside "+  indexObject.getProperty() + " tree, " +
+                        "we are removing the " + oldValueString + " node the id " + id
+                + " and adding that to the " + newValueString + " node !");
+
                 listNew = (List<String>) bPlusTree.search(newValueString);
                 listOld = (List<String>) bPlusTree.search(oldValueString);
+
+                System.out.println("Node: " + newValueString + " before adding: " + listNew);
+                System.out.println("Node: " + oldValueString + " before removing: " + listOld);
+
                 listOld.remove(id);
                 if (listOld.isEmpty()) {
                     bPlusTree.delete(oldValueString);
@@ -233,12 +265,26 @@ public class IndexingServiceImpl implements IndexingService {
                 } else {
                     listNew.add(id);
                 }
+
+                System.out.println("Node: " + newValueString + " after adding: " + listNew);
+                System.out.println("Node: " + oldValueString + " after removing: " + listOld);
                 break;
             case "integer":
                 int newValueInt = newValue.asInt();
                 int oldValueInt = oldValue.asInt();
+
+
+                System.out.println("inside "+  indexObject.getProperty() + " tree, " +
+                        "we are removing the " + oldValueInt + " node the id " + id
+                        + " and adding that to the " + newValueInt + " node !");
+
+
                 listNew = (List<String>) bPlusTree.search(newValueInt);
                 listOld = (List<String>) bPlusTree.search(oldValueInt);
+
+                System.out.println("Node: " + newValueInt + " before adding: " + listNew);
+                System.out.println("Node: " + oldValueInt + " before removing: " + listOld);
+
                 listOld.remove(id);
                 if (listOld.isEmpty()) {
                     bPlusTree.delete(oldValueInt);
@@ -250,12 +296,27 @@ public class IndexingServiceImpl implements IndexingService {
                 } else {
                     listNew.add(id);
                 }
+
+                System.out.println("Node: " + newValueInt + " after adding: " + listNew);
+                System.out.println("Node: " + oldValueInt + " after removing: " + listOld);
                 break;
             case "number":
                 double newValueDouble = newValue.asDouble();
                 double oldValueDouble = oldValue.asDouble();
+
+
+                System.out.println("inside "+  indexObject.getProperty() + " tree, " +
+                        "we are removing the " + oldValueDouble + " node the id " + id
+                        + " and adding that to the " + newValueDouble + " node !");
+
+
                 listNew = (List<String>) bPlusTree.search(newValueDouble);
                 listOld = (List<String>) bPlusTree.search(oldValueDouble);
+
+                System.out.println("Node: " + newValueDouble + " before adding: " + listNew);
+                System.out.println("Node: " + oldValueDouble + " before removing: " + listOld);
+
+
                 listOld.remove(id);
                 if (listOld.isEmpty()) {
                     bPlusTree.delete(oldValueDouble);
@@ -267,12 +328,26 @@ public class IndexingServiceImpl implements IndexingService {
                 } else {
                     listNew.add(id);
                 }
+
+                System.out.println("Node: " + newValueDouble + " after adding: " + listNew);
+                System.out.println("Node: " + oldValueDouble + " after removing: " + listOld);
                 break;
             case "boolean":
                 boolean newValueBoolean = newValue.asBoolean();
                 boolean oldValueBoolean = oldValue.asBoolean();
+
+
+                System.out.println("inside "+  indexObject.getProperty() + " tree, " +
+                        "we are removing the " + oldValueBoolean + " node the id " + id
+                        + " and adding that to the " + newValueBoolean + " node !");
+
                 listNew = (List<String>) bPlusTree.search(newValueBoolean);
                 listOld = (List<String>) bPlusTree.search(oldValueBoolean);
+
+                System.out.println("Node: " + newValueBoolean + " before adding: " + listNew);
+                System.out.println("Node: " + oldValueBoolean + " before removing: " + listOld);
+
+
                 listOld.remove(id);
                 if (listOld.isEmpty()) {
                     bPlusTree.delete(oldValueBoolean);
@@ -284,6 +359,10 @@ public class IndexingServiceImpl implements IndexingService {
                 } else {
                     listNew.add(id);
                 }
+
+
+                System.out.println("Node: " + newValueBoolean + " after adding: " + listNew);
+                System.out.println("Node: " + oldValueBoolean + " after removing: " + listOld);
                 break;
         }
     }

@@ -1,5 +1,8 @@
 package atypon.app.node.controller;
 
+import atypon.app.node.kafka.KafkaBroadcastService;
+import atypon.app.node.kafka.TopicType;
+import atypon.app.node.kafka.event.CreateDocumentEvent;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
@@ -22,14 +25,14 @@ import java.io.IOException;
 public class DocumentController {
     private final DocumentService documentService;
     private final ValidatorService validatorService;
-    private final BroadcastService broadcastService;
+    private final KafkaBroadcastService kafkaBroadcastService;
     @Autowired
     public DocumentController(DocumentService documentService,
                               ValidatorService validatorService,
-                              BroadcastService broadcastService) {
+                              KafkaBroadcastService kafkaBroadcastService) {
         this.documentService = documentService;
         this.validatorService = validatorService;
-        this.broadcastService = broadcastService;
+        this.kafkaBroadcastService = kafkaBroadcastService;
     }
     @PostMapping("/create")
     public ResponseEntity<String> createDocument(@RequestBody DocumentRequest request) throws JsonProcessingException {
@@ -47,9 +50,9 @@ public class DocumentController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
             }
         }
-        documentService.addDocument(databaseName, collectionName, documentData);
+        kafkaBroadcastService.broadCast(TopicType.Create_Document_Topic, new CreateDocumentEvent(request));
       //  broadcastService.ProtectedBroadcast(request, "/document/create");
-        return ResponseEntity.status(HttpStatus.OK).body("Document has been added successfully!");
+        return ResponseEntity.status(HttpStatus.OK).body(documentService.addDocument(databaseName, collectionName, documentData));
     }
     @RequestMapping("/read-property") // Fully Okay
     public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {

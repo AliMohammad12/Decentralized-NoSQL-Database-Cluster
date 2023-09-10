@@ -51,7 +51,7 @@ public class DocumentServiceImpl implements DocumentService {
         return path;
     }
     @Override
-    public void addDocument(String databaseName, String collectionName, JsonNode document) throws JsonProcessingException {
+    public String addDocument(String databaseName, String collectionName, JsonNode document) throws JsonProcessingException {
         ObjectNode objectNode = (ObjectNode) document;
         if (!objectNode.has("id")) {
             String uniqueId = java.util.UUID.randomUUID().toString();
@@ -62,6 +62,8 @@ public class DocumentServiceImpl implements DocumentService {
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
         FileOperations.writeJsonAtLocation(jsonString, path.toString(), objectNode.get("id").asText() + ".json");
         indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, objectNode);
+
+        return objectNode.get("id").asText();
     }
     @Override
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
@@ -119,7 +121,6 @@ public class DocumentServiceImpl implements DocumentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
-        // if it's indexed
         IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
         if (indexingService.isIndexed(indexObject)) {
             indexingService.deleteDocumentByProperty(databaseName, collectionName, property);
@@ -132,8 +133,10 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve("Documents");
 
 
-        // todo: must remove the deleted ID's from the tree --> solved: lazy deletion
-        //  when we read a document from the tree we iterate at the list and delete the id's that don't exist.
+        // todo: must remove the deleted ID's from the tree --> lazy deletion
+        //  when we read a document from the tree we iterate at the list and
+        //  delete the id's that don't exist. (DONE)
+
         Collection collection = new Collection(collectionName, new Database(databaseName));
         ArrayNode jsonArray = collectionService.readCollection(collection);
         for (JsonNode element : jsonArray) {
@@ -165,7 +168,6 @@ public class DocumentServiceImpl implements DocumentService {
             }
         }
     }
-
     @Override
     public JsonNode readDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();

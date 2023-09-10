@@ -23,7 +23,7 @@ import java.util.Map;
 
 
 @Component
-@DependsOn("clusterDatabaseService")
+//@DependsOn("clusterDatabaseService")
 public class ClusterCollectionService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
     private final RestTemplate restTemplate;
@@ -32,10 +32,10 @@ public class ClusterCollectionService {
         this.restTemplate = restTemplate;
     }
 
-    @PostConstruct
-    public void init() {
-        createCollection(NewC.class);
-    }
+//    @PostConstruct
+//    public void init() {
+//        createCollection(NewC.class);
+//    }
     public void createCollection(Class<?> collectionClass) { // make it load-balanced don't forget
         CollectionSchema collectionSchema = new CollectionSchema();
         String databaseName = DatabaseInfo.getName();
