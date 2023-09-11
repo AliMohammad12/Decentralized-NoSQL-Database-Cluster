@@ -21,8 +21,6 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
     private static Path getPath() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails user = (UserDetails) authentication.getPrincipal();
         Path path = Path.of("Storage", Node.getName());
         return path;
     }

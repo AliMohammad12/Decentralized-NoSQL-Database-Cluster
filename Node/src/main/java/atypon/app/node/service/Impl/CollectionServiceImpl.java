@@ -4,11 +4,14 @@ import atypon.app.node.model.Collection;
 import atypon.app.node.model.Node;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
+import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +23,7 @@ import java.nio.file.Path;
 
 @Service
 public class CollectionServiceImpl implements CollectionService {
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
     private final JsonService jsonService;
     @Autowired
     public CollectionServiceImpl(JsonService jsonService) {
@@ -46,6 +50,9 @@ public class CollectionServiceImpl implements CollectionService {
         FileOperations.createDirectory(path.toString(), collection.getName());
         FileOperations.createDirectory(path.resolve(collection.getName()).toString(), "Documents");
         FileOperations.writeJsonAtLocation(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");
+
+        logger.info("Successfully created collection schema '" +collection.getName() +"' within '" +
+                databaseName + "' database!, schema: \n" + schemaJsonString);
     }
     @Override
     public ArrayNode readCollection(Collection collection) {
@@ -62,6 +69,9 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve(databaseName).
                 resolve("Collections");
         FileOperations.updateDirectoryName(path.toString(), oldCollectionName, newCollectionName);
+
+        logger.info("Successfully updated the name of '" + oldCollectionName
+                + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
     @Override
     public void deleteCollection(Collection collection) throws IOException {
@@ -70,5 +80,7 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve("Collections").
                 resolve(collection.getName());
         FileOperations.deleteDirectory(path.toString());
+        logger.info("Successfully deleted the collection '" + collection.getName() +"' within '" +
+                collection.getDatabase().getName() + "' database!");
     }
 }

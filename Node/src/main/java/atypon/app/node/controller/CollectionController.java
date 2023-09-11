@@ -1,48 +1,46 @@
 package atypon.app.node.controller;
 
+import atypon.app.node.kafka.KafkaService;
+import atypon.app.node.kafka.TopicType;
+import atypon.app.node.kafka.event.collection.CreateCollectionEvent;
+import atypon.app.node.kafka.event.collection.DeleteCollectionEvent;
+import atypon.app.node.kafka.event.collection.UpdateCollectionEvent;
 import atypon.app.node.model.Collection;
 import atypon.app.node.request.collection.CollectionRequest;
 import atypon.app.node.request.collection.CollectionUpdateRequest;
 import atypon.app.node.request.collection.CreateCollectionRequest;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.schema.CollectionSchema;
-import atypon.app.node.service.services.BroadcastService;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.ValidatorService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/collection")
 public class CollectionController {
     private final CollectionService collectionService;
     private final ValidatorService validatorService;
-    private final BroadcastService broadcastService;
+    private final KafkaService kafkaService;
     @Autowired
     public CollectionController(CollectionService collectionService,
                                 ValidatorService validatorService,
-                                BroadcastService broadcastingService) {
+                                KafkaService kafkaService) {
         this.collectionService = collectionService;
         this.validatorService = validatorService;
-        this.broadcastService = broadcastingService;
+        this.kafkaService = kafkaService;
     }
     @RequestMapping("/create")
-    public ResponseEntity<?> createCollection(@RequestBody CreateCollectionRequest request) throws JsonProcessingException {
+    public ResponseEntity<?> createCollection(@RequestBody CreateCollectionRequest request)  {
         CollectionSchema collectionSchema = request.getCollectionSchema();
         Collection collection = collectionSchema.getCollection();
-        if (!request.isBroadcast()) {
-            ValidatorResponse validatorResponse = validatorService.isCollectionExists(collection.getDatabase().getName(), collection.getName());
-            if (validatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
-            }
+        ValidatorResponse validatorResponse = validatorService.isCollectionExists(collection.getDatabase().getName(), collection.getName());
+        if (validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
-        collectionService.createCollection(collectionSchema);
-        broadcastService.ProtectedBroadcast(request, "/collection/create");
+        kafkaService.broadCast(TopicType.Create_Collection, new CreateCollectionEvent(request));
         return ResponseEntity.ok("Collection created successfully!");
     }
     @PostMapping(value = "/read")
@@ -55,39 +53,29 @@ public class CollectionController {
     }
     @PostMapping("/update")
     public ResponseEntity<?> updateCollection(@RequestBody CollectionUpdateRequest request) {
-//        if (request.isBroadcast()) { todo: consider doing something like this to make it more efficient
-//            collectionService.updateCollectionName(databaseName, oldCollectionName, newCollectionName);
-//            return ResponseEntity.ok("Collection name has been updated successfully!");
-//        }
         String oldCollectionName = request.getOldCollectionName();
         String newCollectionName = request.getNewCollectionName();
         String databaseName = request.getDatabaseName();
-        if (!request.isBroadcast()) {
-            ValidatorResponse oldCollectionValidator = validatorService.isCollectionExists(databaseName, oldCollectionName);
-            if (!oldCollectionValidator.isValid()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldCollectionValidator.getMessage());
-            }
-            ValidatorResponse newCollectionValidator = validatorService.isCollectionExists(databaseName, newCollectionName);
-            if (newCollectionValidator.isValid()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(newCollectionValidator.getMessage());
-            }
+        ValidatorResponse oldCollectionValidator = validatorService.isCollectionExists(databaseName, oldCollectionName);
+        if (!oldCollectionValidator.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldCollectionValidator.getMessage());
         }
-        collectionService.updateCollectionName(databaseName, oldCollectionName, newCollectionName);
-        broadcastService.ProtectedBroadcast(request, "/collection/update");
+        ValidatorResponse newCollectionValidator = validatorService.isCollectionExists(databaseName, newCollectionName);
+        if (newCollectionValidator.isValid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(newCollectionValidator.getMessage());
+        }
+        kafkaService.broadCast(TopicType.Update_Collection, new UpdateCollectionEvent(request));
         return ResponseEntity.ok("Collection name has been updated successfully!");
     }
     @RequestMapping("/delete")
-    public ResponseEntity<?> deleteCollection(@RequestBody CollectionRequest request) throws IOException {
+    public ResponseEntity<?> deleteCollection(@RequestBody CollectionRequest request)  {
         Collection collection = request.getCollection();
         String databaseName = collection.getDatabase().getName();
-        if (!request.isBroadcast()) {
-            ValidatorResponse collectionValidator = validatorService.isCollectionExists(databaseName, collection.getName());
-            if (!collectionValidator.isValid()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidator.getMessage());
-            }
+        ValidatorResponse collectionValidator = validatorService.isCollectionExists(databaseName, collection.getName());
+        if (!collectionValidator.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidator.getMessage());
         }
-        collectionService.deleteCollection(collection);
-        broadcastService.ProtectedBroadcast(request, "/collection/delete");
+        kafkaService.broadCast(TopicType.Delete_Collection, new DeleteCollectionEvent(request));
         return ResponseEntity.ok("Collection has been deleted successfully!");
     }
 }

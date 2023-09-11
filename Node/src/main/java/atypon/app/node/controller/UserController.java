@@ -1,6 +1,9 @@
 package atypon.app.node.controller;
 
 
+import atypon.app.node.kafka.KafkaService;
+import atypon.app.node.kafka.TopicType;
+import atypon.app.node.kafka.event.user.CreateUserEvent;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.request.UserRequest;
@@ -25,14 +28,14 @@ import java.io.IOException;
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
-    private final BroadcastService broadcastService;
+    private final KafkaService kafkaService;
     private final ValidatorService validatorService;
     @Autowired
     public UserController(UserService userService,
-                          BroadcastService broadcastService,
+                          KafkaService kafkaService,
                           ValidatorService validatorService) {
         this.userService = userService;
-        this.broadcastService = broadcastService;
+        this.kafkaService = kafkaService;
         this.validatorService = validatorService;
     }
     @PostMapping("/register")
@@ -42,8 +45,7 @@ public class UserController {
         if (validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
-        userService.addUser(user.getUsername(), user.getPassword());
-        broadcastService.UnprotectedBroadcast(request, "/user/register");
+        kafkaService.broadCast(TopicType.Create_User, new CreateUserEvent(request));
         return ResponseEntity.ok("The user " + user.getUsername() + " was registered successfully!");
     }
 

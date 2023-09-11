@@ -1,0 +1,11 @@
+[ {
+  "username" : "admin",
+  "database" : "DB1",
+  "collection" : "C1",
+  "property" : "Age"
+}, {
+  "username" : "admin",
+  "database" : "DB1",
+  "collection" : "C1",
+  "property" : "Name"
+} ]

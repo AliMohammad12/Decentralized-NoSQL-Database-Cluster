@@ -65,7 +65,7 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void indexingInitializer() throws IOException {
-        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Indexing.json").toString());
+        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Databases").resolve("Indexing.json").toString());
         for (JsonNode objNode : jsonNode) {
             String username = objNode.get("username").asText();
             String database = objNode.get("database").asText();
@@ -77,8 +77,8 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void deleteIndexing(IndexObject indexObject) throws IOException {
-        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Indexing.json").toString());
-        File jsonFile = new File(getPath().resolve("Indexing.json").toString());
+        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Databases").resolve("Indexing.json").toString());
+        File jsonFile = new File(getPath().resolve("Databases").resolve("Indexing.json").toString());
         List<IndexObject> indexObjects = new ArrayList<>();
         for (JsonNode objNode : jsonNode) {
             String username = objNode.get("username").asText();
@@ -110,7 +110,7 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
     @Override
-    public void indexDocumentPropertiesIfExists(String database, String collection, ObjectNode document) {
+    public void indexDocumentPropertiesIfExists(String database, String collection, JsonNode document) {
         String username = getUsername();
         String id = document.get("id").asText();
         Iterator<String> iterator = document.fieldNames();
@@ -470,7 +470,7 @@ public class IndexingServiceImpl implements IndexingService {
         Path path = getPath();
         CollectionType listType = objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, IndexObject.class);
         List<IndexObject> indexObjects;
-        File jsonFile = new File(path.resolve("Indexing.json").toString());
+        File jsonFile = new File(path.resolve("Databases").resolve("Indexing.json").toString());
         if (jsonFile.exists() && jsonFile.length() > 0) {
             indexObjects = objectMapper.readValue(jsonFile, listType);
         } else {
@@ -480,7 +480,7 @@ public class IndexingServiceImpl implements IndexingService {
         objectMapper.writeValue(jsonFile, indexObjects);
     }
     private boolean indexExistsInFile(IndexObject indexObject) throws IOException {
-        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Indexing.json").toString());
+        JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Databases").resolve("Indexing.json").toString());
         for (JsonNode objNode : jsonNode) {
             String database = objNode.get("database").asText();
             String collection = objNode.get("collection").asText();

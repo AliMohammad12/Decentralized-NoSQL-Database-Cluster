@@ -16,7 +16,7 @@ public interface IndexingService {
     void indexingInitializer() throws IOException;
     void deleteIndexing(IndexObject indexObject) throws IOException;
     void IndexingFinalizer();
-    void indexDocumentPropertiesIfExists(String database, String collection, ObjectNode document);
+    void indexDocumentPropertiesIfExists(String database, String collection, JsonNode document);
     void deleteDocumentByProperty(String database, String collection, Property property) throws IOException;
     ArrayNode readDocumentsByProperty(String database, String collection, Property property) throws IOException;
     boolean isIndexed(IndexObject indexObject);

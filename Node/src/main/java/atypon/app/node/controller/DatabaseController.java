@@ -1,10 +1,14 @@
 package atypon.app.node.controller;
 
+import atypon.app.node.kafka.KafkaService;
+import atypon.app.node.kafka.TopicType;
+import atypon.app.node.kafka.event.database.CreateDatabaseEvent;
+import atypon.app.node.kafka.event.database.DeleteDatabaseEvent;
+import atypon.app.node.kafka.event.database.UpdateDatabaseEvent;
 import atypon.app.node.model.Database;
 import atypon.app.node.request.database.DatabaseRequest;
 import atypon.app.node.request.database.DatabaseUpdateRequest;
 import atypon.app.node.response.ValidatorResponse;
-import atypon.app.node.service.services.BroadcastService;
 import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.ValidatorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,26 +28,23 @@ import java.util.List;
 public class DatabaseController {
     private final DatabaseService databaseService;
     private final ValidatorService validatorService;
-    private final BroadcastService broadcastService;
+    private final KafkaService kafkaService;
     @Autowired
     public DatabaseController(DatabaseService databaseService,
                               ValidatorService validatorService,
-                              BroadcastService broadcastService) {
+                              KafkaService kafkaService) {
         this.databaseService = databaseService;
         this.validatorService = validatorService;
-        this.broadcastService = broadcastService;
+        this.kafkaService = kafkaService;
     }
     @PostMapping(value = "/create")
     public ResponseEntity<?> createDatabase(@RequestBody DatabaseRequest request) {
         Database database = request.getDatabase();
-        if (!request.isBroadcast()) {
-            ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
-            if (validatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
-            }
+        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
+        if (validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
-        databaseService.createDatabase(database);
-        broadcastService.ProtectedBroadcast(request, "/database/create");
+        kafkaService.broadCast(TopicType.Create_Database, new CreateDatabaseEvent(request));
         return ResponseEntity.ok("Database created successfully!");
     }
     @RequestMapping(value = "/read/all")
@@ -64,31 +65,26 @@ public class DatabaseController {
     public ResponseEntity<?> updateDatabase(@RequestBody DatabaseUpdateRequest request) {
         String oldDatabaseName = request.getOldDatabaseName();
         String newDatabaseName = request.getNewDatabaseName();
-        if (!request.isBroadcast()) {
-            ValidatorResponse oldDbValidatorResponse = validatorService.isDatabaseExists(oldDatabaseName);
-            if (!oldDbValidatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldDbValidatorResponse.getMessage());
-            }
-            ValidatorResponse newDbValidatorResponse = validatorService.isDatabaseExists(newDatabaseName);
-            if (newDbValidatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(newDbValidatorResponse.getMessage());
-            }
+        ValidatorResponse oldDbValidatorResponse = validatorService.isDatabaseExists(oldDatabaseName);
+        if (!oldDbValidatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldDbValidatorResponse.getMessage());
         }
-        databaseService.updateDatabaseName(oldDatabaseName, newDatabaseName);
-        broadcastService.ProtectedBroadcast(request, "/database/update");
+        ValidatorResponse newDbValidatorResponse = validatorService.isDatabaseExists(newDatabaseName);
+        if (newDbValidatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(newDbValidatorResponse.getMessage());
+        }
+        kafkaService.broadCast(TopicType.Update_Database, new UpdateDatabaseEvent(request));
         return ResponseEntity.ok("Database name updated successfully!");
     }
+
     @PostMapping("/delete")
     public ResponseEntity<?> deleteDatabase(@RequestBody DatabaseRequest request) throws IOException {
         Database database = request.getDatabase();
-        if (!request.isBroadcast()) {
-            ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
-            if (!validatorResponse.isValid()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
-            }
+        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
+        if (!validatorResponse.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
         }
-        databaseService.deleteDatabase(database);
-        broadcastService.ProtectedBroadcast(request, "/database/delete");
+        kafkaService.broadCast(TopicType.Delete_Database, new DeleteDatabaseEvent(request));
         return ResponseEntity.ok("Database deleted successfully!");
     }
 }

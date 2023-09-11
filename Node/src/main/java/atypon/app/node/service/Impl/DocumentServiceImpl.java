@@ -7,10 +7,7 @@ import atypon.app.node.model.Database;
 import atypon.app.node.model.Node;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
-import atypon.app.node.service.services.CollectionService;
-import atypon.app.node.service.services.DocumentService;
-import atypon.app.node.service.services.IndexingService;
-import atypon.app.node.service.services.JsonService;
+import atypon.app.node.service.services.*;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,6 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.security.core.Authentication;
@@ -33,6 +32,7 @@ import java.util.Map;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
     private final JsonService jsonService;
     private final IndexingService indexingService;
     private final CollectionService collectionService;
@@ -52,18 +52,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
     @Override
     public String addDocument(String databaseName, String collectionName, JsonNode document) throws JsonProcessingException {
-        ObjectNode objectNode = (ObjectNode) document;
-        if (!objectNode.has("id")) {
-            String uniqueId = java.util.UUID.randomUUID().toString();
-            objectNode.put("id", uniqueId);
-            objectNode.put("version", 1);
-        }
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
-        FileOperations.writeJsonAtLocation(jsonString, path.toString(), objectNode.get("id").asText() + ".json");
-        indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, objectNode);
+        FileOperations.writeJsonAtLocation(jsonString, path.toString(), document.get("id").asText() + ".json");
+        indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
 
-        return objectNode.get("id").asText();
+        logger.info("Successfully created the document: \n" + document.toPrettyString());
+        return document.get("id").asText();
     }
     @Override
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {

@@ -1,6 +1,10 @@
 package atypon.app.node.controller;
 
 import atypon.app.node.indexing.IndexObject;
+import atypon.app.node.kafka.KafkaService;
+import atypon.app.node.kafka.TopicType;
+import atypon.app.node.kafka.event.indexing.CreateIndexingEvent;
+import atypon.app.node.kafka.event.indexing.DeleteIndexingEvent;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.services.BroadcastService;
 import atypon.app.node.service.services.IndexingService;
@@ -20,29 +24,33 @@ import java.io.IOException;
 public class IndexingController {
     private final ValidatorService validatorService;
     private final IndexingService indexingService;
+    private final KafkaService kafkaService;
+
     @Autowired
     public IndexingController(ValidatorService validatorService,
-                              IndexingService indexingService) {
+                              IndexingService indexingService,
+                              KafkaService kafkaService) {
         this.validatorService = validatorService;
         this.indexingService = indexingService;
+        this.kafkaService = kafkaService;
     }
     @PostMapping("/create")
-    public ResponseEntity<?> createIndexing(@RequestBody IndexObject indexObject) throws IOException {
+    public ResponseEntity<?> createIndexing(@RequestBody IndexObject indexObject) {
         ValidatorResponse validatorResponse = validatorService.isIndexCreationAllowed(indexObject);
         if (!validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
-        indexingService.createIndexing(indexObject);
+        kafkaService.broadCast(TopicType.Create_Indexing, new CreateIndexingEvent(indexObject));
         return ResponseEntity.ok(validatorResponse.getMessage() +
                 " Index for property '" + indexObject.getProperty() + "' has been created successfully!");
     }
     @PostMapping("/delete")
-    public ResponseEntity<?> deleteIndexing(@RequestBody IndexObject indexObject) throws IOException {
+    public ResponseEntity<?> deleteIndexing(@RequestBody IndexObject indexObject) {
         ValidatorResponse validatorResponse = validatorService.IsIndexDeletionAllowed(indexObject);
         if (!validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
         }
-        indexingService.deleteIndexing(indexObject);
+        kafkaService.broadCast(TopicType.Delete_Indexing, new DeleteIndexingEvent(indexObject));
         return ResponseEntity.ok(validatorResponse.getMessage() +
                 " Index for property '" + indexObject.getProperty() + "' has been deleted successfully!");
     }
