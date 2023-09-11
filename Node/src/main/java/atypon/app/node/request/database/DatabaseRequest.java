@@ -5,6 +5,6 @@ import atypon.app.node.request.ApiRequest;
 import lombok.Data;
 
 @Data
-public class DatabaseRequest extends ApiRequest {
+public class DatabaseRequest  {
     private Database database;
 }

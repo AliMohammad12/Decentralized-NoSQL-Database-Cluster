@@ -1,7 +1,7 @@
-package atypon.app.request;
+package atypon.app.node.request.user;
 
-import atypon.app.model.User;
-import atypon.app.request.ApiRequest;
+import atypon.app.node.model.User;
+import atypon.app.node.request.ApiRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,6 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Data
-public class UserRequest extends ApiRequest {
+public class UserRequest {
     private User user;
 }

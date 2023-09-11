@@ -1,12 +1,10 @@
 package atypon.cluster.client.service;
 
-import atypon.cluster.client.dbmodels.DatabaseInfo;
+import atypon.cluster.client.dbmodels.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.InvalidUserCredentialsException;
-import atypon.cluster.client.dbmodels.Database;
-import atypon.cluster.client.dbmodels.Node;
-import atypon.cluster.client.dbmodels.UserInfo;
 import atypon.cluster.client.request.DatabaseRequest;
+import atypon.cluster.client.request.WriteRequest;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,15 +32,20 @@ public class ClusterDatabaseService {
     public void init() {
         createDatabase();
     }
-    public void createDatabase() { // make it load-balanced.
-        String url = "http://localhost:"+Node.getPort()+"/database/create";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    public void createDatabase() {
+        String url = "http://localhost:9000/load-balance/write";
         DatabaseRequest databaseRequest = new DatabaseRequest();
         databaseRequest.setDatabase(new Database(databaseName));
-        headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
-        HttpEntity<Object> requestEntity = new HttpEntity<>(databaseRequest, headers);
         DatabaseInfo.setName(databaseName);
+
+        User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
+        WriteRequest writeRequest = new WriteRequest(user, databaseRequest, "database/create");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
+        HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
+
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
             logger.info("Database with the name '" + databaseName + "' has been successfully created and will be utilized.");
@@ -58,4 +61,23 @@ public class ClusterDatabaseService {
             }
         }
     }
+
+    public void createDatabase2() {
+        String url = "http://localhost:9000/load-balance/write";
+        WriteRequest writeRequest = new WriteRequest();
+        DatabaseRequest databaseRequest = new DatabaseRequest(new Database("Test2"));
+        writeRequest.setRequestData(databaseRequest);
+        writeRequest.setUser(new User("admin", "admin"));
+        writeRequest.setEndpoint("database/create");
+
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+     //   headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
+        HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
+
+        ResponseEntity<?> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        System.out.println(responseEntity.getBody().toString());
+    }
+
 }

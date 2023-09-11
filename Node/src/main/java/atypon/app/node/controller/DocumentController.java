@@ -107,7 +107,7 @@ public class DocumentController {
         return ResponseEntity.ok("Document has been deleted successfully!");
     }
     @PostMapping("/update")
-    public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) throws IOException {
+    public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) {
         JsonNode document = request.getUpdateRequest();
         String collection = document.get("CollectionName").asText();
         String database = document.get("DatabaseName").asText();

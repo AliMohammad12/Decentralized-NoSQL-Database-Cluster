@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocumentUpdateRequest extends ApiRequest {
+public class DocumentUpdateRequest {
     private JsonNode updateRequest;
 }

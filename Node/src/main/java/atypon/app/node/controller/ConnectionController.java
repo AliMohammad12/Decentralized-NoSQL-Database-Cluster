@@ -12,7 +12,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/auth")
-public class ConnectionController { // connection controller
+public class ConnectionController {
     private final IndexingService indexingService;
     @Autowired
     public ConnectionController(IndexingService indexingService) {

@@ -1,7 +1,6 @@
 package atypon.app.controller;
 
-import atypon.app.model.User;
-import atypon.app.request.UserRequest;
+import atypon.app.model.UserRequest;
 import atypon.app.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

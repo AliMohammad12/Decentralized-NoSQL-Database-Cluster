@@ -50,9 +50,9 @@ public class ValidatorServiceImpl implements ValidatorService {
         Path path = getPath().resolve(databaseName);
         ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
-            validatorResponse.setMessage("Database with the name " + databaseName + " exists!");
+            validatorResponse.setMessage("Database with the name '" + databaseName + "' exists!");
         } else {
-            validatorResponse.setMessage("Database with the name " + databaseName + " does not exist!");
+            validatorResponse.setMessage("Database with the name '" + databaseName + "' does not exist!");
         }
         return validatorResponse;
     }
@@ -60,15 +60,15 @@ public class ValidatorServiceImpl implements ValidatorService {
     public ValidatorResponse isCollectionExists(String databaseName, String collectionName) {
         ValidatorResponse validateDatabase = isDatabaseExists(databaseName);
         if (!validateDatabase.isValid()) {
-            validateDatabase.setMessage("Database with the name " + databaseName + " doesn't exist!");
+            validateDatabase.setMessage("Database with the name '" + databaseName + "' doesn't exist!");
             return validateDatabase;
         }
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
         ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
-            validatorResponse.setMessage("The collection " + collectionName + " exists within " + databaseName + " database!");
+            validatorResponse.setMessage("The collection '" + collectionName + "' exists within '" + databaseName + "' database!");
         } else {
-            validatorResponse.setMessage("The collection " + collectionName + " does not exist within " + databaseName + " database!");
+            validatorResponse.setMessage("The collection '" + collectionName + "' does not exist within '" + databaseName + "' database!");
         }
         return validatorResponse;
     }
@@ -111,9 +111,9 @@ public class ValidatorServiceImpl implements ValidatorService {
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection).resolve("Documents").resolve(id + ".json");
         ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isFileExists(path.toString()));
         if (validatorResponse.isValid()) {
-            validatorResponse.setMessage("The requested document within " + collection + " exists !");
+            validatorResponse.setMessage("The requested document within '" + collection + "' collection exists !");
         } else {
-            validatorResponse.setMessage("The requested document within " + collection + " doesn't exist !");
+            validatorResponse.setMessage("The requested document within '" + collection + "' collection doesn't exist !");
         }
         return validatorResponse;
     }
@@ -169,7 +169,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         User[] users = objectMapper.readValue(jsonFile, User[].class);
         for (User user : users) {
             if (user.getUsername().equals(username)) {
-                return new ValidatorResponse("User with the name " + username + " exists!", true);
+                return new ValidatorResponse("User with the name '" + username + "' exists!", true);
             }
         }
         return new ValidatorResponse("User with the name " + username + " doesn't exist!", false);

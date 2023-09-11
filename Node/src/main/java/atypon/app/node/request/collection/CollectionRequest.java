@@ -4,6 +4,6 @@ import atypon.app.node.model.Collection;
 import atypon.app.node.request.ApiRequest;
 import lombok.Data;
 @Data
-public class CollectionRequest extends ApiRequest {
+public class CollectionRequest{
     private Collection collection;
 }

@@ -5,6 +5,6 @@ import atypon.app.node.schema.CollectionSchema;
 import lombok.Data;
 
 @Data
-public class CreateCollectionRequest extends ApiRequest {
+public class CreateCollectionRequest {
     private CollectionSchema collectionSchema;
 }

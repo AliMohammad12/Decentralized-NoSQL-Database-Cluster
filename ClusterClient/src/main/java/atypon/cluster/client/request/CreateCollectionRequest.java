@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateCollectionRequest extends ApiRequest {
+public class CreateCollectionRequest {
     private CollectionSchema collectionSchema;
 }

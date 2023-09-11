@@ -4,4 +4,7 @@
 }, {
   "username" : "User",
   "password" : "User"
+}, {
+  "username" : "User2",
+  "password" : "User2"
 } ]

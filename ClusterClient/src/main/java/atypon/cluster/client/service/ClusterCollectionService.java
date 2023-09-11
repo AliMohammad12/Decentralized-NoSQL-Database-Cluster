@@ -4,6 +4,7 @@ import atypon.cluster.client.dbmodels.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.CollectionReadException;
 import atypon.cluster.client.request.CreateCollectionRequest;
+import atypon.cluster.client.request.WriteRequest;
 import atypon.cluster.client.schema.CollectionSchema;
 import atypon.cluster.client.testmodels.NewC;
 import jakarta.annotation.PostConstruct;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 
 @Component
-//@DependsOn("clusterDatabaseService")
+@DependsOn("clusterDatabaseService")
 public class ClusterCollectionService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
     private final RestTemplate restTemplate;
@@ -36,9 +37,10 @@ public class ClusterCollectionService {
 //    public void init() {
 //        createCollection(NewC.class);
 //    }
-    public void createCollection(Class<?> collectionClass) { // make it load-balanced don't forget
+    public void createCollection(Class<?> collectionClass) {
         CollectionSchema collectionSchema = new CollectionSchema();
         String databaseName = DatabaseInfo.getName();
+
         Field[] fields = collectionClass.getDeclaredFields();
         Collection collection = new Collection();
         collection.setName(collectionClass.getSimpleName());
@@ -51,11 +53,16 @@ public class ClusterCollectionService {
             schemaFields.put(fieldName, createDummyValue(fieldType));
         }
         collectionSchema.setFields(schemaFields);
-        String url = "http://localhost:"+Node.getPort()+"/collection/create";
+
+        String url = "http://localhost:9000/load-balance/write";
+        User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
+        WriteRequest writeRequest = new WriteRequest(user,
+                new CreateCollectionRequest(collectionSchema), "collection/create");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
-        HttpEntity<CreateCollectionRequest> requestEntity = new HttpEntity<>(new CreateCollectionRequest(collectionSchema), headers);
+        HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
             logger.info("The collection '" + collectionClass.getSimpleName() + "' has been successfully created!");

@@ -1,7 +1,6 @@
 package atypon.app.service;
 
-import atypon.app.model.User;
-import atypon.app.request.UserRequest;
+import atypon.app.model.UserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;

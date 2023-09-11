@@ -18,4 +18,10 @@ public class LoadBalancerConfig {
     public RestTemplate connectionRestTemplate() {
         return new RestTemplate();
     }
+
+    @Bean(name = "writeRequestsBean")
+    @LoadBalanced
+    public RestTemplate writeRequestsRestTemplate() {
+        return new RestTemplate();
+    }
 }

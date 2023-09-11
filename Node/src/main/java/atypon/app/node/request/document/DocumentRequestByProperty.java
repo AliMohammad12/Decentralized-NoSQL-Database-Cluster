@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocumentRequestByProperty extends ApiRequest {
+public class DocumentRequestByProperty {
     private String database;
     private String collection;
     private Property property;

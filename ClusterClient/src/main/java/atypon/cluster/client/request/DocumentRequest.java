@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DocumentRequest extends ApiRequest {
+public class DocumentRequest {
     private JsonNode documentNode;
 }
