@@ -20,11 +20,13 @@ public class ConnectionController {
     }
     @PostMapping("/connect")
     public ResponseEntity<?> connect(@RequestBody User user) throws IOException {
+        System.out.println("Connecting User!");
         indexingService.indexingInitializer();
         return ResponseEntity.ok(new NodeInfo(Node.getPort(), Node.getNodeId(), Node.getName()));
     }
     @PostMapping("/disconnect")
-    public ResponseEntity<?> disconnect()  {
+    public ResponseEntity<?> disconnect(@RequestBody User user)  {
+        System.out.println("Disconnecting user");
         indexingService.IndexingFinalizer();
         return ResponseEntity.ok("Successfully disconnected from the node!");
     }

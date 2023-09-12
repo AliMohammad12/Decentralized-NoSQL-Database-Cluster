@@ -1,12 +1,12 @@
 package atypon.cluster.client.service;
 
-import atypon.cluster.client.dbmodels.*;
+import atypon.cluster.client.models.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.CollectionReadException;
-import atypon.cluster.client.request.CreateCollectionRequest;
 import atypon.cluster.client.request.WriteRequest;
-import atypon.cluster.client.schema.CollectionSchema;
-import atypon.cluster.client.testmodels.NewC;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,13 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
 
 
 @Component
@@ -33,31 +32,39 @@ public class ClusterCollectionService {
         this.restTemplate = restTemplate;
     }
 
-//    @PostConstruct
-//    public void init() {
-//        createCollection(NewC.class);
-//    }
+    @PostConstruct
+    private void init() {
+       // createCollection(Employee.class);
+       // System.out.println(readCollection(NewC.class).toPrettyString());
+    }
     public void createCollection(Class<?> collectionClass) {
-        CollectionSchema collectionSchema = new CollectionSchema();
-        String databaseName = DatabaseInfo.getName();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode collection = objectMapper.createObjectNode();
+        ObjectNode database = objectMapper.createObjectNode();
+        database.put("name", DatabaseInfo.getName());
+        collection.put("name", collectionClass.getSimpleName());
+        collection.put("database", database);
 
-        Field[] fields = collectionClass.getDeclaredFields();
-        Collection collection = new Collection();
-        collection.setName(collectionClass.getSimpleName());
-        collection.setDatabase(new Database(databaseName));
-        collectionSchema.setCollection(collection);
-        Map<String, Object> schemaFields = new HashMap<>();
-        for (Field field : fields) {
+        Field[] fieldsArray = collectionClass.getDeclaredFields();
+        ObjectNode fields = objectMapper.createObjectNode();
+        for (Field field : fieldsArray) {
             String fieldName = field.getName();
             Class<?> fieldType = field.getType();
-            schemaFields.put(fieldName, createDummyValue(fieldType));
+            Object dummyValue = createDummyValue(fieldType);
+            fields.putPOJO(fieldName, dummyValue);
         }
-        collectionSchema.setFields(schemaFields);
+
+        ObjectNode schema = objectMapper.createObjectNode();
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        schema.put("fields", fields);
+        schema.put("collection", collection);
+        objectNode.put("collectionSchema", schema);
+
 
         String url = "http://localhost:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user,
-                new CreateCollectionRequest(collectionSchema), "collection/create");
+                objectNode.toString(), "collection/create");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -73,21 +80,26 @@ public class ClusterCollectionService {
             throw new ClusterOperationalIssueException();
         }
     }
-    public void readCollection(Class<?> collectionClass) {
+    public JsonNode readCollection(Class<?> collectionClass) {
         String collectionName = collectionClass.getSimpleName();
         String databaseName = DatabaseInfo.getName();
-        Collection collection = new Collection(collectionName, new Database(databaseName));
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode request = objectMapper.createObjectNode();
+        request.put("name", collectionName);
+        request.put("database",
+                objectMapper.createObjectNode().put("name", databaseName));
 
         String url = "http://localhost:"+Node.getPort()+"/collection/read";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
-        HttpEntity<Collection> requestEntity = new HttpEntity<>(collection, headers);
+        HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<?> responseEntity;
+        ResponseEntity<JsonNode> responseEntity;
         try {
-            responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+            responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, JsonNode.class);
             logger.info("Successfully read the '" + collectionClass.getSimpleName() + "' collection from the '" + databaseName + "' database.");
+            return responseEntity.getBody();
         }catch (HttpClientErrorException e) {
             logger.error("Failed to read the collection: '" + collectionName + "'.");
             throw new CollectionReadException(collectionName);
@@ -95,10 +107,8 @@ public class ClusterCollectionService {
             logger.error("There's an issue within the cluster, cannot create collection, please retry later!");
             throw new ClusterOperationalIssueException();
         }
-        System.out.println(responseEntity.getBody());
     }
-
-    public static Object createDummyValue(Class<?> fieldType) {
+    private static Object createDummyValue(Class<?> fieldType) {
         if (fieldType == Integer.class || fieldType == int.class) {
             return 0;
         } else if (fieldType == Double.class || fieldType == double.class) {

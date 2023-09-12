@@ -69,7 +69,7 @@ public class DocumentController {
         }
         return ResponseEntity.ok(documentService.readDocumentProperty(request));
     }
-    @RequestMapping("/read-id") // Fully Ok
+    @PostMapping("/read-id") // Fully Ok
     public ResponseEntity<?> readDocumentById(@RequestBody DocumentRequest request) throws IOException {
         JsonNode document = request.getDocumentNode();
         String collection = document.get("CollectionName").asText();
@@ -88,7 +88,6 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
         }
         kafkaService.broadCast(TopicType.Delete_Documents_ByProperty, new DeleteDocumentsByPropertyEvent(request));
-        //documentService.deleteDocumentByProperty(request);
         return ResponseEntity.ok("Document has been deleted successfully!");
     }
 
@@ -102,7 +101,6 @@ public class DocumentController {
         if (!validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
         }
-        //documentService.deleteDocumentById(database, collection, documentData);
         kafkaService.broadCast(TopicType.Delete_Document_ById, new DeleteDocumentByIdEvent(request));
         return ResponseEntity.ok("Document has been deleted successfully!");
     }

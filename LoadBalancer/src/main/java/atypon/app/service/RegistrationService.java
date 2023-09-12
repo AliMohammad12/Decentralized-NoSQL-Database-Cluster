@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.sql.SQLOutput;
-
 @Service
 public class RegistrationService {
     private final RestTemplate registrationRestTemplate;

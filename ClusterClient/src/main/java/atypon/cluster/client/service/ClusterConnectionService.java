@@ -2,10 +2,10 @@ package atypon.cluster.client.service;
 
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.InvalidUserCredentialsException;
-import atypon.cluster.client.dbmodels.Node;
-import atypon.cluster.client.dbmodels.NodeInfo;
-import atypon.cluster.client.dbmodels.User;
-import atypon.cluster.client.dbmodels.UserInfo;
+import atypon.cluster.client.models.Node;
+import atypon.cluster.client.models.NodeInfo;
+import atypon.cluster.client.models.User;
+import atypon.cluster.client.models.UserInfo;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -32,10 +33,10 @@ public class ClusterConnectionService {
         this.password = password;
     }
     @PostConstruct
-    public void init() {
+    private void init() {
         connect();
     }
-    public void connect() {
+    private void connect() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(username, password);

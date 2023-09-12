@@ -24,4 +24,9 @@ public class LoadBalancerConfig {
     public RestTemplate writeRequestsRestTemplate() {
         return new RestTemplate();
     }
+
+    @Bean(name = "nonBalancedRestTemplateBean")
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }

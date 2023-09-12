@@ -6,8 +6,10 @@
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/controller/ConnectionController.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/model/User.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/model/WriteRequest.java
+/home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/model/UserStatus.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/model/NodeInfo.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/controller/RegistrationController.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/model/Database.java
+/home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/config/UserStatusConfig.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/service/WriteRequestsService.java
 /home/ali/IdeaProjects/Decentralized Cluster-Based NoSQL DB System/LoadBalancer/src/main/java/atypon/app/service/ConnectionService.java

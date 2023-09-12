@@ -9,7 +9,5 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ClusterClient {
     public static void main(String[] args) {
         SpringApplication.run(ClusterClient.class, args);
-//        ClusterCollectionService clusterCollectionService = new ClusterCollectionService();
-//        clusterCollectionService.createCollection(Employee.class);
     }
 }

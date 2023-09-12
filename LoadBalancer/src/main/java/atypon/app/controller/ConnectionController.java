@@ -21,4 +21,8 @@ public class ConnectionController {
     public ResponseEntity<?> connect(@RequestBody User user) {
         return connectionService.connect(user);
     }
+    @PostMapping("/disconnect")
+    public ResponseEntity<?> disconnect(@RequestBody User user) {
+        return connectionService.disconnect(user);
+    }
 }

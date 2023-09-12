@@ -16,9 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class WriteRequestsService {
-
     private final RestTemplate restTemplate;
-
     @Autowired
     public WriteRequestsService(@Qualifier("writeRequestsBean") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
