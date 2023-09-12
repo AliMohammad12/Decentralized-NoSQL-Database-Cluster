@@ -13,6 +13,8 @@
         <option value="$PROJECT_DIR$/UserAccessMs/pom.xml" />
         <option value="$PROJECT_DIR$/LoadBalancer/pom.xml" />
         <option value="$PROJECT_DIR$/ClusterClient/pom.xml" />
+        <option value="$PROJECT_DIR$/ClusterWebClient/pom.xml" />
+        <option value="$PROJECT_DIR$/BankApplication/pom.xml" />
       </list>
     </option>
   </component>

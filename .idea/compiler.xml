@@ -8,22 +8,27 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="EurekaServer" />
+        <module name="BankApplication" />
+        <module name="ClusterClient" />
+        <module name="ClusterWebClient" />
+        <module name="Node" />
         <module name="BootstrappingNode" />
         <module name="LoadBalancer" />
-        <module name="ClusterClient" />
-        <module name="Client" />
-        <module name="Node" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="ClusterWebClient (1)" target="20" />
+      <module name="ClusterWebClient (2)" target="20" />
       <module name="Worker" target="20" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="BankApplication" options="-parameters" />
       <module name="BootstrappingNode" options="-parameters" />
-      <module name="Client" options="-parameters" />
       <module name="ClusterClient" options="-parameters" />
+      <module name="ClusterWebClient" options="-parameters" />
+      <module name="ClusterWebClient (1)" options="-parameters" />
       <module name="EurekaServer" options="-parameters" />
       <module name="LoadBalancer" options="-parameters" />
       <module name="Node" options="-parameters" />

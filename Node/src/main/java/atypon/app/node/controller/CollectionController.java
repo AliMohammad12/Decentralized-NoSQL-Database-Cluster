@@ -67,7 +67,7 @@ public class CollectionController {
         kafkaService.broadCast(TopicType.Update_Collection, new UpdateCollectionEvent(request));
         return ResponseEntity.ok("Collection name has been updated successfully!");
     }
-    @RequestMapping("/delete")
+    @RequestMapping("/delete")  // todo: must clear the B+ Tree (Don't forget)
     public ResponseEntity<?> deleteCollection(@RequestBody CollectionRequest request)  {
         Collection collection = request.getCollection();
         String databaseName = collection.getDatabase().getName();

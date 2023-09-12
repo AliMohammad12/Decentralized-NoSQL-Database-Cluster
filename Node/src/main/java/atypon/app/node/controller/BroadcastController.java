@@ -82,7 +82,7 @@ public class BroadcastController {
         String collectionName = document.get("CollectionName").asText();
         String databaseName = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
-        documentService.addDocument(databaseName, collectionName, documentData);
+      //  documentService.addDocument(databaseName, collectionName, documentData);
         return ResponseEntity.status(HttpStatus.OK).body("Document has been added successfully!");
     }
     // delete doc + update later

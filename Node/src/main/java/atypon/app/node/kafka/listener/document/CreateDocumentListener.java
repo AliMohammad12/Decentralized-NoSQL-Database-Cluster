@@ -25,10 +25,6 @@ public class CreateDocumentListener implements EventListener {
         setAuth(event.getUsername());
 
         DocumentRequest request = createDocumentEvent.getDocumentRequest();
-        JsonNode document = request.getDocumentNode();
-        String collectionName = document.get("CollectionName").asText();
-        String databaseName = document.get("DatabaseName").asText();
-        JsonNode documentData = document.get("data");
-        documentService.addDocument(databaseName, collectionName, documentData);
+        documentService.addDocument(request);
     }
 }

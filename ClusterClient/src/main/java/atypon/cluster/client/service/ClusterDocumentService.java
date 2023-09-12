@@ -5,6 +5,7 @@ import atypon.cluster.client.exception.*;
 
 import atypon.cluster.client.request.Property;
 import atypon.cluster.client.request.WriteRequest;
+import atypon.cluster.client.testmodels.NewC;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,17 +37,17 @@ public class ClusterDocumentService {
 
     @PostConstruct
     public void init() throws JsonProcessingException, DocumentReadingException {
-//         createDocument(NewC.class, new NewC("Heya", 20, 1200, true));
+        // createDocument(NewC.class, new NewC("OhMama", 23, 1200, true));
 //        createDocument(NewC.class, new NewC("Ahmad", 20, 1200, false));
 //        createDocument(NewC.class, new NewC("Mumen", 21, 1500, true));
 //        createDocument(NewC.class, new NewC("ABCCC", 21, 1200, false));
 
         // deleteDocumentById(NewC.class, "dd051cb5-e096-4dde-a93f-c2e1a34faea7");
-        // deleteDocumentByProperty(NewC.class, new Property("age", 20));
+        // deleteDocumentByProperty(NewC.class, new Property("age", 23));
         // readDocumentById(NewC.class, "3c0f2ad1-f163-4a64-b6ce-4017d6123ccc4ac");
 //        updateDocument(NewC.class, "3c0f2ad1-f163-4a64-b6ce-4017d6ccc4ac",
 //                new Property("name", "Ahmad"),
-//                new Property("age", 123),
+//                new Property("age", 25),
 //                new Property("salary", 1500.20));
 
         // readDocumentByProperty(NewC.class, new Property("age", 20));
@@ -57,12 +58,18 @@ public class ClusterDocumentService {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.createObjectNode();
 
+        System.out.println(Node.getName());
         ObjectNode documentNode = objectMapper.createObjectNode();
         documentNode.put("CollectionName", collectionName);
         documentNode.put("DatabaseName", databaseName);
+        documentNode.put("NodeName", Node.getName());
         String documentString = objectMapper.writeValueAsString(document);
         documentNode.put("data", objectMapper.readTree(documentString));
         objectNode.put("documentNode", documentNode);
+
+
+        System.out.println(objectNode.toPrettyString());
+
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, objectNode.toString(), "document/create");
@@ -139,6 +146,9 @@ public class ClusterDocumentService {
         documentNode.put("database", databaseName);
         documentNode.put("collection", collectionName);
         documentNode.put("property", propertyNode);
+        documentNode.put("nodeNameIndexingUpdate", Node.getName());
+
+        System.out.println(documentNode.toPrettyString());
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, documentNode.toString(), "document/delete-property");
@@ -184,11 +194,14 @@ public class ClusterDocumentService {
         int version = jsonNode.get("version").asInt();
         info.put("version", version);
         info.put("id", id);
+        info.put("NodeName", Node.getName());
         updateRequest.put("CollectionName", collectionName);
         updateRequest.put("DatabaseName", databaseName);
         updateRequest.put("info", info);
         updateRequest.put("data", data);
         request.put("updateRequest", updateRequest);
+
+        System.out.println(request.toPrettyString());
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, request.toString(), "document/update");

@@ -73,6 +73,9 @@ public class CollectionServiceImpl implements CollectionService {
         logger.info("Successfully updated the name of '" + oldCollectionName
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
+
+
+    // todo: must clear the B+ Tree (Don't forget)
     @Override
     public void deleteCollection(Collection collection) throws IOException {
         Path path = getPath().

@@ -49,7 +49,6 @@ public class ConnectionService {
             return ResponseEntity.ok(nodeInfo);
         }
     }
-
     public ResponseEntity<?> disconnect(User user) {
         UserStatus userStatus = statusHashMap.get(user);
         NodeInfo nodeInfo = userStatus.getNodeInfo();

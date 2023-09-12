@@ -5,6 +5,7 @@ import atypon.app.node.indexing.Property;
 import atypon.app.node.model.Collection;
 import atypon.app.node.model.Database;
 import atypon.app.node.model.Node;
+import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.service.services.*;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.sql.SQLOutput;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -51,12 +54,20 @@ public class DocumentServiceImpl implements DocumentService {
         return path;
     }
     @Override
-    public String addDocument(String databaseName, String collectionName, JsonNode document) throws JsonProcessingException {
+    public String addDocument(DocumentRequest request) throws JsonProcessingException {
+        JsonNode documentRequest = request.getDocumentNode();
+        String collectionName = documentRequest.get("CollectionName").asText();
+        String databaseName = documentRequest.get("DatabaseName").asText();
+        String nodeNameIndexingUpdate = documentRequest.get("NodeName").asText();
+        JsonNode document = documentRequest.get("data");
+
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
         FileOperations.writeJsonAtLocation(jsonString, path.toString(), document.get("id").asText() + ".json");
-        indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
 
+        if (nodeNameIndexingUpdate.equals(Node.getName())) {
+            indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
+        }
         logger.info("Successfully created the document: \n" + document.toPrettyString());
         return document.get("id").asText();
     }
@@ -108,18 +119,21 @@ public class DocumentServiceImpl implements DocumentService {
         return documentsArray;
     }
     @Override
-    public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException {
+    public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException { // DocumentRequestByProperty
         String collectionName = request.getCollection();
         String databaseName = request.getDatabase();
         Property property = request.getProperty();
+        String nodeNameIndexingUpdate = request.getNodeNameIndexingUpdate();
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
         IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
-        if (indexingService.isIndexed(indexObject)) {
-            indexingService.deleteDocumentByProperty(databaseName, collectionName, property);
-            return;
+        if (nodeNameIndexingUpdate.equals(Node.getName())) {
+            if (indexingService.isIndexed(indexObject)) {
+                indexingService.deleteDocumentByProperty(databaseName, collectionName, property);
+                return;
+            }
         }
 
         Path path = getPath().resolve(databaseName)
@@ -184,7 +198,7 @@ public class DocumentServiceImpl implements DocumentService {
         FileOperations.deleteFile(path.toString());
     }
     @Override
-    public void updateDocument(DocumentUpdateRequest request) throws IOException {
+    public void updateDocument(DocumentUpdateRequest request) throws IOException { // DocumentUpdateRequest
         JsonNode updateRequest = request.getUpdateRequest();
         String collection = updateRequest.get("CollectionName").asText();
         String database = updateRequest.get("DatabaseName").asText();
@@ -196,6 +210,8 @@ public class DocumentServiceImpl implements DocumentService {
             // - check for each property if it's indexed, if it's indexed we need to fix our bPlusTree
             JsonNode documentData = updateRequest.get("data");
             String id = documentInfo.get("id").asText();
+            String nodeNameIndexingUpdate = documentInfo.get("NodeName").asText();
+
             Iterator<Map.Entry<String, JsonNode>> fieldsIterator = documentData.fields();
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -205,10 +221,12 @@ public class DocumentServiceImpl implements DocumentService {
                 String fieldName = field.getKey();
                 JsonNode fieldValue = field.getValue();
                 IndexObject indexObject = new IndexObject(username, database, collection, fieldName);
-                if (indexingService.isIndexed(indexObject)) {
-                    indexingService.updateIndexing(id, fieldValue, documentBeforeUpdate.get(fieldName), indexObject);
-                }
 
+                if (nodeNameIndexingUpdate.equals(Node.getName())) {
+                    if (indexingService.isIndexed(indexObject)) {
+                        indexingService.updateIndexing(id, fieldValue, documentBeforeUpdate.get(fieldName), indexObject);
+                    }
+                }
                 ((ObjectNode) documentBeforeUpdate).put(fieldName, fieldValue);
             }
             ((ObjectNode) documentBeforeUpdate).put("version", versionNumber + 1);

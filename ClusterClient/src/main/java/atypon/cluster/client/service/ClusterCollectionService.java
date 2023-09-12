@@ -32,6 +32,8 @@ public class ClusterCollectionService {
         this.restTemplate = restTemplate;
     }
 
+
+    // todo: make choosing a name for the collection optional !!!
     @PostConstruct
     private void init() {
        // createCollection(Employee.class);

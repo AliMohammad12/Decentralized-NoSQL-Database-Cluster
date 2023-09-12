@@ -13,4 +13,5 @@ public class DocumentRequestByProperty {
     private String database;
     private String collection;
     private Property property;
+    private String nodeNameIndexingUpdate;
 }

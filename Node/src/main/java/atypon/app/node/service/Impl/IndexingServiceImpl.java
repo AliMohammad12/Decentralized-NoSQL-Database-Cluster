@@ -65,6 +65,7 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void indexingInitializer() throws IOException {
+        System.out.println("Inside Indexing initializer!");
         JsonNode jsonNode = jsonService.readJsonNode(getPath().resolve("Databases").resolve("Indexing.json").toString());
         for (JsonNode objNode : jsonNode) {
             String username = objNode.get("username").asText();
@@ -73,6 +74,8 @@ public class IndexingServiceImpl implements IndexingService {
             String property = objNode.get("property").asText();
             IndexObject indexObject = new IndexObject(username, database, collection, property);
             createIndexing(indexObject);
+
+            System.out.println("Filling the tree with Index -> " + indexObject.toString());
         }
     }
     @Override
@@ -99,18 +102,21 @@ public class IndexingServiceImpl implements IndexingService {
     }
     @Override
     public void IndexingFinalizer() {
+        System.out.println("Inside indexing finalizer!");
         String username = getUsername();
         Iterator<Map.Entry<IndexObject, BPlusTree>> iterator = indexRegistry.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<IndexObject, BPlusTree> entry = iterator.next();
             IndexObject indexObject = entry.getKey();
             if (indexObject.getUsername().equals(username)) {
+                System.out.println("Clearing Index -> " + indexObject.toString() + " from tree");
                 iterator.remove();
             }
         }
     }
     @Override
     public void indexDocumentPropertiesIfExists(String database, String collection, JsonNode document) {
+        System.out.println("At index Document properties if exists!");
         String username = getUsername();
         String id = document.get("id").asText();
         Iterator<String> iterator = document.fieldNames();
@@ -125,6 +131,7 @@ public class IndexingServiceImpl implements IndexingService {
             if (isIndexed(indexObject)) {
                 BPlusTree bPlusTree = indexRegistry.get(indexObject);
                 addDocumentToTree(bPlusTree, id, type, node);
+                System.out.println("Field '" + field + "' is indexed, filling the tree with => " + type + " " + node.toPrettyString());
             }
         }
     }
