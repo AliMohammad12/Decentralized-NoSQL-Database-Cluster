@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collection List</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="#">NoSql Database</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h1>Your Collections</h1>
+  <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#createCollectionModal">Create Collection</button>
+
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Collection Name</th>
+      <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="collection : ${collections}">
+      <td th:text="${collection}"></td>
+      <td>
+        <form method="post" action="/collection/delete" style="display: inline;">
+          <input type="hidden" name="collectionName" th:value="${collection}" />
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <form method="post" action="/collection/view" style="display: inline;">
+          <input type="hidden" name="collectionName" th:value="${collection}" />
+          <button type="submit" class="btn btn-info">View</button>
+        </form>
+        <form method="post" action="/collection/update" style="display: inline;">
+          <button type="submit" class="btn btn-warning">Update Name</button>
+          <input type="hidden" name="oldCollectionName" th:value="${collection}" />
+          <input type="text" name="newCollectionName" placeholder="Enter new name" required/>
+        </form>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<div class="modal fade" id="createCollectionModal" tabindex="-1" role="dialog" aria-labelledby="createCollectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createCollectionModalLabel">Create Collection</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="/collection/create">
+          <div class="form-group">
+            <label for="collectionName">Collection Name:</label>
+            <input type="text" class="form-control" id="collectionName" name="collectionName" placeholder="Enter collection name" required>
+          </div>
+          <div class="form-group" id="fieldsContainer">
+            <div class="field">
+              <input type="text" class="form-control" name="fieldName" placeholder="Field Name" required>
+              <select class="form-control" name="fieldType">
+                <option value="integer">Integer</option>
+                <option value="string">String</option>
+                <option value="double">Double</option>
+                <option value="boolean">Boolean</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary mt-2" id="addField">Add Field</button>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("addField").addEventListener("click", function () {
+      var field = `
+        <div class="field mt-2"> <!-- Add spacing -->
+          <input type="text" class="form-control" name="fieldName" placeholder="Field Name" required>
+          <select class="form-control" name="fieldType">
+            <option value="integer">Integer</option>
+            <option value="string">String</option>
+            <option value="double">Double</option>
+            <option value="boolean">Boolean</option>
+          </select>
+        </div>`;
+      document.getElementById("fieldsContainer").insertAdjacentHTML("beforeend", field);
+      // Scroll to the newly added field pair
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+  });
+</script>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+</body>
+</html>

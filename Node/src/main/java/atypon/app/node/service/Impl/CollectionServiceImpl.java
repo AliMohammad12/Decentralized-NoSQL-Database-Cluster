@@ -23,7 +23,7 @@ import java.nio.file.Path;
 
 @Service
 public class CollectionServiceImpl implements CollectionService {
-    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CollectionService.class);
     private final JsonService jsonService;
     @Autowired
     public CollectionServiceImpl(JsonService jsonService) {
@@ -56,6 +56,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
     @Override
     public ArrayNode readCollection(Collection collection) {
+        logger.info("Reading the collection with the name '" + collection.getName() + "' !");
         Path path = getPath().
                 resolve(collection.getDatabase().getName()).
                 resolve("Collections").

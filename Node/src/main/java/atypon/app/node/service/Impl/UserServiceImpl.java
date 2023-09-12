@@ -3,10 +3,13 @@ package atypon.app.node.service.Impl;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.service.services.UserService;
+import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.CollectionType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,12 +23,14 @@ import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private static Path getPath() {
         Path path = Path.of("Storage", Node.getName());
         return path;
     }
     @Override
     public void addUser(String username, String password) throws IOException {
+        logger.info("Registering user '" + username + "' in the cluster!");
         // split this into Reading an array
         // and writing an array to file
 

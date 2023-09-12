@@ -35,7 +35,7 @@ import java.util.Map;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
-    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
+    private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
     private final JsonService jsonService;
     private final IndexingService indexingService;
     private final CollectionService collectionService;
@@ -73,6 +73,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
     @Override
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
+        logger.info("Reading documents with property '" + request.getProperty() + "' in database '" +
+                "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
+
         String collectionName = request.getCollection();
         String databaseName = request.getDatabase();
         Property property = request.getProperty();
@@ -120,6 +123,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
     @Override
     public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException { // DocumentRequestByProperty
+        logger.info("Deleting documents with property '" + request.getProperty() + "' in database '" +
+                "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
         String collectionName = request.getCollection();
         String databaseName = request.getDatabase();
         Property property = request.getProperty();
@@ -180,6 +185,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public JsonNode readDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
+        logger.info("Reading document with id '" + id + "' in " +
+                "database '" + database + "' in collection '" + collection + "' !");
+
         Path path = getPath().resolve(database)
                 .resolve("Collections")
                 .resolve(collection)
@@ -190,6 +198,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void deleteDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
+        logger.info("Deleting document with id '" + id + "' in " +
+                "database '" + database + "' in collection '" + collection + "' !");
+
         Path path = getPath().resolve(database)
                 .resolve("Collections")
                 .resolve(collection)
@@ -204,6 +215,7 @@ public class DocumentServiceImpl implements DocumentService {
         String database = updateRequest.get("DatabaseName").asText();
         JsonNode documentInfo = updateRequest.get("info");
         JsonNode documentBeforeUpdate = readDocumentById(database, collection, documentInfo);
+
         int versionNumber = documentBeforeUpdate.get("version").asInt();
         int requestVersionNumber = documentInfo.get("version").asInt();
         if (versionNumber == requestVersionNumber) {
@@ -211,7 +223,7 @@ public class DocumentServiceImpl implements DocumentService {
             JsonNode documentData = updateRequest.get("data");
             String id = documentInfo.get("id").asText();
             String nodeNameIndexingUpdate = documentInfo.get("NodeName").asText();
-
+            logger.info("Updating the document with id '" + id + "' !");
             Iterator<Map.Entry<String, JsonNode>> fieldsIterator = documentData.fields();
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetails user = (UserDetails) authentication.getPrincipal();

@@ -47,12 +47,12 @@ public class DatabaseController {
         kafkaService.broadCast(TopicType.Create_Database, new CreateDatabaseEvent(request));
         return ResponseEntity.ok("Database created successfully!");
     }
-    @RequestMapping(value = "/read/all")
+    @RequestMapping(value = "/read/all") // OK
     public ResponseEntity<List<String>> readDatabases() {
         List<String> databasesList = databaseService.readDatabases();
         return ResponseEntity.ok(databasesList);
     }
-    @RequestMapping("/read/database")
+    @RequestMapping("/read/database") // OK
     public ResponseEntity<?> readDatabase(@RequestBody Database database) {
         ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
         if (!validatorResponse.isValid()) {

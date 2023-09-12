@@ -35,15 +35,21 @@
         </thead>
         <tbody>
         <tr th:each="database : ${databases}">
-            <td th:text="${database.name}"></td>
+            <td th:text="${database}"></td>
             <td>
                 <form method="post" action="/database/delete" style="display: inline;">
-                    <input type="hidden" name="databaseName" th:value="${database.name}" />
+                    <input type="hidden" name="databaseName" th:value="${database}" />
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
                 <form method="post" action="/database/view" style="display: inline;">
-                    <input type="hidden" name="databaseName" th:value="${database.name}" />
+                    <input type="hidden" name="databaseName" th:value="${database}" />
                     <button type="submit" class="btn btn-info">View</button>
+                </form>
+
+                <form method="post" action="/database/update" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">Update Name</button>
+                    <input type="hidden" name="oldDatabaseName" th:value="${database}" />
+                    <input type="text" name="newDatabaseName" placeholder="Enter new name" required/>
                 </form>
             </td>
         </tr>
@@ -51,7 +57,6 @@
     </table>
 </div>
 
-<!-- Create Database Modal -->
 <div class="modal fade" id="createDatabaseModal" tabindex="-1" role="dialog" aria-labelledby="createDatabaseModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -62,13 +67,11 @@
                 </button>
             </div>
             <div class="modal-body">
-                <!-- Add form fields for creating a new database -->
                 <form method="post" action="/database/create">
                     <div class="form-group">
                         <label for="databaseName">Database Name:</label>
                         <input type="text" class="form-control" id="databaseName" name="databaseName" placeholder="Enter database name">
                     </div>
-                    <!-- Add other form fields as needed -->
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Create</button>

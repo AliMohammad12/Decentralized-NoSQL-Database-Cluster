@@ -17,7 +17,6 @@ public class ShutdownListener implements ApplicationListener<ContextClosedEvent>
     public ShutdownListener(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
     @Override
     public void onApplicationEvent(ContextClosedEvent event) {
         sendShutdownRequest();

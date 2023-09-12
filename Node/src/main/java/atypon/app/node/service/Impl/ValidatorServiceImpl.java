@@ -7,6 +7,7 @@ import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
+import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.ValidatorService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +17,8 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
@@ -34,6 +37,7 @@ import java.util.Set;
 
 @Service
 public class ValidatorServiceImpl implements ValidatorService {
+    private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
     private final HashMap<IndexObject, BPlusTree> indexRegistry;
     @Autowired
     public ValidatorServiceImpl(@Qualifier("indexRegistry") HashMap<IndexObject, BPlusTree> indexRegistry) {
@@ -47,6 +51,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDatabaseExists(String databaseName) {
+        logger.info("Checking if database '" + databaseName + "' exists!");
         Path path = getPath().resolve(databaseName);
         ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
@@ -58,6 +63,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isCollectionExists(String databaseName, String collectionName) {
+        logger.info("Checking if collection '" + collectionName + "' exists inside '" + databaseName + "' !");
         ValidatorResponse validateDatabase = isDatabaseExists(databaseName);
         if (!validateDatabase.isValid()) {
             validateDatabase.setMessage("Database with the name '" + databaseName + "' doesn't exist!");
@@ -74,6 +80,8 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentValid(String database, String collection, JsonNode targetDocument) {
+        logger.info("Checking if the document is valid:" + targetDocument.toPrettyString());
+
         // let json service do some action here
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -100,6 +108,9 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentExists(String database, String collection, JsonNode document) {
+        logger.info("Checking if the document exists " +
+                "in database '" + database +"' in collection '" + collection + "' :" + document.toPrettyString());
+
         ValidatorResponse validateCollection = isCollectionExists(database, collection);
         if (!validateCollection.isValid()) {
             return validateCollection;
@@ -119,6 +130,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentUpdateRequestValid(String database, String collection, JsonNode documentData, JsonNode documentInfo) {
+        logger.info("Validating document update request!");
         ValidatorResponse validatorResponse = isDocumentExists(database, collection, documentInfo);
         if (!validatorResponse.isValid()) {
             return validatorResponse;
@@ -164,6 +176,8 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isUsernameExists(String username) throws IOException {
+        logger.info("Checking if username '" + username +"' exists!");
+
         File jsonFile = new File("Storage/" + Node.getName() + "/Users.json");
         ObjectMapper objectMapper = new ObjectMapper();
         User[] users = objectMapper.readValue(jsonFile, User[].class);
@@ -176,6 +190,8 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isIndexCreationAllowed(IndexObject indexObject) {
+        logger.info("Validating index creation request!");
+
         String database = indexObject.getDatabase();
         String collection = indexObject.getCollection();
         ValidatorResponse validatorResponse = isCollectionExists(database, collection);
@@ -204,6 +220,8 @@ public class ValidatorServiceImpl implements ValidatorService {
 
     @Override
     public ValidatorResponse IsIndexDeletionAllowed(IndexObject indexObject) {
+        logger.info("Validating index deletion request!");
+
         String property = indexObject.getProperty();
         if (indexRegistry.containsKey(indexObject)) {
             return new ValidatorResponse("Index deletion for property '" + property+ "' is valid!", true);
@@ -213,6 +231,8 @@ public class ValidatorServiceImpl implements ValidatorService {
 
     @Override
     public ValidatorResponse isDocumentRequestValid(DocumentRequestByProperty documentRequestByProperty) {
+        logger.info("Validating document request!");
+
         String database = documentRequestByProperty.getDatabase();
         String collection = documentRequestByProperty.getCollection();
 

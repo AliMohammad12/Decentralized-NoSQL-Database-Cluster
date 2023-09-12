@@ -2,13 +2,16 @@
   "$schema" : "https://json-schema.org/draft/2020-12/schema",
   "type" : "object",
   "properties" : {
-    "Name" : {
-      "type" : "string"
-    },
-    "Age" : {
+    "age" : {
       "type" : "integer"
+    },
+    "salary" : {
+      "type" : "number"
+    },
+    "name" : {
+      "type" : "string"
     }
   },
-  "required" : [ "Name", "Age" ],
+  "required" : [ "age", "salary", "name" ],
   "additionalProperties" : false
 }

@@ -18,7 +18,6 @@ import java.util.List;
 @Service
 public class DatabaseServiceImpl implements DatabaseService {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
-
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -33,11 +32,13 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
     @Override
     public List<String> readDatabases() {
+        logger.info("Reading all databases!");
         Path path = getPath();
         return FileOperations.readDirectories(path.toString());
     }
     @Override
     public List<String> readDatabase(Database database) {
+        logger.info("Reading the database with the name: '" + database.getName() + "' !");
         Path path = getPath().resolve(database.getName()).resolve("Collections");
         return FileOperations.readDirectories(path.toString());
     }
@@ -46,7 +47,6 @@ public class DatabaseServiceImpl implements DatabaseService {
         Path path = getPath();
         FileOperations.updateDirectoryName(path.toString(), oldDatabaseName, newDatabaseName);
         logger.info("Database with the name '" + oldDatabaseName + "' have been successfully updated to '" + newDatabaseName + "' !");
-
     }
     @Override
     public void deleteDatabase(Database database) throws IOException {
