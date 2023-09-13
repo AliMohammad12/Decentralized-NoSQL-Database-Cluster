@@ -25,7 +25,6 @@ public class IndexingController {
     private final ValidatorService validatorService;
     private final IndexingService indexingService;
     private final KafkaService kafkaService;
-
     @Autowired
     public IndexingController(ValidatorService validatorService,
                               IndexingService indexingService,
@@ -53,5 +52,11 @@ public class IndexingController {
         kafkaService.broadCast(TopicType.Delete_Indexing, new DeleteIndexingEvent(indexObject));
         return ResponseEntity.ok(validatorResponse.getMessage() +
                 " Index for property '" + indexObject.getProperty() + "' has been deleted successfully!");
+    }
+    @PostMapping("/status") // if deleting it is valid then indexing is there (exists)
+    public ResponseEntity<Boolean> indexStatus(@RequestBody IndexObject indexObject) {
+        System.out.println("checking if index exists!");
+        ValidatorResponse validatorResponse = validatorService.IsIndexDeletionAllowed(indexObject);
+        return ResponseEntity.ok(validatorResponse.isValid());
     }
 }

@@ -11,15 +11,10 @@ import java.util.Map;
 
 public interface JsonService {
     JsonNode generateJsonSchema(Class<?> clazz);
-
     JsonNode generateJsonSchema2(Map<String, Object> properties);
-
     String convertJsonToString(JsonNode jsonNode) throws JsonProcessingException;
-
     ArrayNode readJsonArray(String directory);
-
     JsonNode readJsonNode(String path) throws IOException;
-
     User findByUsername(String username) throws IOException;
     String getPropertyTypeFromSchema(IndexObject indexObject);
 }

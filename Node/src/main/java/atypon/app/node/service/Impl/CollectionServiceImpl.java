@@ -9,7 +9,9 @@ import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map;
 
 @Service
 public class CollectionServiceImpl implements CollectionService {
@@ -64,6 +68,29 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve("Documents");
         return jsonService.readJsonArray(path.toString());
     }
+
+    @Override
+    public JsonNode readCollectionFields(Collection collection) throws IOException {
+        String database = collection.getDatabase().getName();
+        String collectionName = collection.getName();
+        Path path = getPath().resolve(database).resolve("Collections").resolve(collectionName);
+        JsonNode schemaNode = jsonService.readJsonNode(path.resolve("schema.json").toString());
+        JsonNode properties = schemaNode.get("properties");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode fields = objectMapper.createObjectNode();
+
+        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = properties.fields();
+        while (fieldsIterator.hasNext()) {
+            Map.Entry<String, JsonNode> fieldEntry = fieldsIterator.next();
+            String fieldName = fieldEntry.getKey();
+            JsonNode fieldTypeNode = fieldEntry.getValue().path("type");
+            String fieldType = fieldTypeNode.isTextual() ? fieldTypeNode.asText() : "Unknown";
+
+            fields.put(fieldName, fieldType);
+        }
+        return fields;
+    }
+
     @Override
     public void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName) {
         Path path = getPath().

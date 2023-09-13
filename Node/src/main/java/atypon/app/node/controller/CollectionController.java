@@ -12,14 +12,13 @@ import atypon.app.node.request.collection.CreateCollectionRequest;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
-import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.ValidatorService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/collection")
@@ -53,6 +52,14 @@ public class CollectionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidator.getMessage());
         }
         return ResponseEntity.ok(collectionService.readCollection(collection));
+    }
+    @PostMapping(value = "/read-fields")
+    public ResponseEntity<?> readCollectionFields(@RequestBody Collection collection) throws IOException {
+        ValidatorResponse collectionValidator = validatorService.isCollectionExists(collection.getDatabase().getName(), collection.getName());
+        if (!collectionValidator.isValid()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidator.getMessage());
+        }
+        return ResponseEntity.ok(collectionService.readCollectionFields(collection));
     }
     @PostMapping("/update")
     public ResponseEntity<?> updateCollection(@RequestBody CollectionUpdateRequest request) {

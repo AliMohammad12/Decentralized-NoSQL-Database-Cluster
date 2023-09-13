@@ -17,11 +17,20 @@
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
+        <form method="post" action="/database/view" class="form-inline">
+          <input type="hidden" name="databaseName" th:value="${database}">
+          <span class="navbar-text" th:text="'View ' + ${database}"></span>
+          <button type="submit" class="btn btn-link nav-link">Go</button>
+        </form>
+      </li>
+      <li class="nav-item">
         <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
       </li>
     </ul>
   </div>
 </nav>
+
+
 
 <div class="container mt-4">
   <h1>Your Collections</h1>

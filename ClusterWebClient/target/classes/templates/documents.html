@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Table Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">NoSql Database</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <form method="post" action="/database/view" class="form-inline">
+                    <input type="hidden" name="databaseName" th:value="${database}">
+                    <span class="navbar-text" th:text="'View ' + ${database}"></span>
+                    <button type="submit" class="btn btn-link nav-link">Go</button>
+                </form>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<br>
+<div class="container">
+    <h1>
+        <span th:text="${collection}"></span>
+        Collection
+    </h1>
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Create Index</th>
+            <th>Delete Index</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <th:block th:each="fieldInfo : ${fieldInfoList}">
+            <tr>
+                <td th:text="${fieldInfo.fieldName}"></td>
+                <td th:text="${fieldInfo.fieldType}"></td>
+                <td>
+                    <form method="post" th:action="@{/indexing/create}">
+                        <input type="hidden" name="fieldName" th:value="${fieldInfo.fieldName}">
+                        <button type="submit" class="btn btn-success" th:if="${!fieldInfo.isIndexed}">Create Index</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" th:action="@{/indexing/delete}">
+                        <input type="hidden" name="fieldName" th:value="${fieldInfo.fieldName}">
+                        <button type="submit" class="btn btn-danger" th:if="${fieldInfo.isIndexed}">Delete Index</button>
+                    </form>
+                </td>
+            </tr>
+        </th:block>
+        </tbody>
+    </table>
+
+    <br>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Version</th>
+            <th th:each="fieldInfo : ${fieldInfoList}" th:text="${fieldInfo.fieldName}"></th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${data}">
+            <td th:text="${item.id}"></td>
+            <td th:text="${item.version}"></td>
+            <td th:each="fieldInfo : ${fieldInfoList}" th:text="${item[__${fieldInfo.fieldName}__]}"></td>
+            <td>
+                <button type="button" class="btn btn-primary" data-toggle="modal" th:attr="data-target='#updateModal' + ${item.id}">Update</button>
+                <br>
+                <form method="post" th:action="@{/document/delete}">
+                    <input type="hidden" name="id" th:value="${item.id}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<th:block th:each="item : ${data}">
+    <div class="modal fade" th:id="'updateModal' + ${item.id}" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" th:id="'updateModalLabel' + ${item.id}">Update Document</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" th:action="@{/document/update}">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <input type="hidden" name="version" th:value="${item.version}">
+
+                        <th:block th:each="fieldInfo : ${fieldInfoList}">
+                            <div class="form-group">
+                                <label th:text="${fieldInfo.fieldName}"></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" th:name="${fieldInfo.fieldName}" th:value="${item[__${fieldInfo.fieldName}__]}" required>
+                                </div>
+                            </div>
+                        </th:block>
+
+                        <button type="submit" class="btn btn-primary">UPDATE</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

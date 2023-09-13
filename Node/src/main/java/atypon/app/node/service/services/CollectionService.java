@@ -7,12 +7,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.io.IOException;
-import java.util.List;
 
 public interface CollectionService {
     void createCollection(CollectionSchema collectionSchema) throws JsonProcessingException;
     void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName);
     void deleteCollection(Collection collection) throws IOException;
     ArrayNode readCollection(Collection collection);
+    JsonNode readCollectionFields(Collection collection) throws IOException;
 }
 

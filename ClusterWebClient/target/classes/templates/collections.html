@@ -17,11 +17,20 @@
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
+        <form method="post" action="/database/view" class="form-inline">
+          <input type="hidden" name="databaseName" th:value="${database}">
+          <span class="navbar-text" th:text="'View ' + ${database}"></span>
+          <button type="submit" class="btn btn-link nav-link">Go</button>
+        </form>
+      </li>
+      <li class="nav-item">
         <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
       </li>
     </ul>
   </div>
 </nav>
+
+
 
 <div class="container mt-4">
   <h1>Your Collections</h1>
@@ -46,7 +55,6 @@
           <input type="hidden" name="collectionName" th:value="${collection}" />
           <button type="submit" class="btn btn-info">View</button>
         </form>
-        <!-- Update form with input fields -->
         <form method="post" action="/collection/update" style="display: inline;">
           <button type="submit" class="btn btn-warning">Update Name</button>
           <input type="hidden" name="oldCollectionName" th:value="${collection}" />
@@ -59,7 +67,6 @@
 
 </div>
 
-<!-- Create Collection Modal -->
 <div class="modal fade" id="createCollectionModal" tabindex="-1" role="dialog" aria-labelledby="createCollectionModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -76,7 +83,6 @@
             <input type="text" class="form-control" id="collectionName" name="collectionName" placeholder="Enter collection name" required>
           </div>
           <div class="form-group" id="fieldsContainer">
-            <!-- Initial field pair (Field, Type) -->
             <div class="field">
               <input type="text" class="form-control" name="fieldName" placeholder="Field Name" required>
               <select class="form-control" name="fieldType">

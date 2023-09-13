@@ -4,6 +4,7 @@ import atypon.app.model.Node;
 import atypon.app.model.User;
 import atypon.app.model.UserInfo;
 import atypon.app.model.WriteRequest;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -72,12 +73,12 @@ public class CollectionService {
            // throw new ClusterOperationalIssueException();
         }
     }
-
     public List<String> readAllCollections(String databaseName) {
         String url = "http://localhost:" + Node.getPort() + "/database/read/database";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
+
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode database = objectMapper.createObjectNode();
         database.put("name", databaseName);
@@ -93,8 +94,49 @@ public class CollectionService {
 
         return responseEntity.getBody();
     }
-    public void readCollection() {
+    public JsonNode readFields(String dbName, String collectionName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode request = objectMapper.createObjectNode();
+        ObjectNode database = objectMapper.createObjectNode();
+        database.put("name", dbName);
+        request.put("name", collectionName);
+        request.put("database", database);
 
+        String url = "http://localhost:" + Node.getPort() + "/collection/read-fields";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
+        HttpEntity<Object> requestEntity = new HttpEntity<>(request.toString(), headers);
+
+        ResponseEntity<JsonNode> responseEntity = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                requestEntity,
+                JsonNode.class
+        );
+        return responseEntity.getBody();
+    }
+    public ArrayNode readCollection(String dbName, String collectionName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode request = objectMapper.createObjectNode();
+        ObjectNode database = objectMapper.createObjectNode();
+        database.put("name", dbName);
+        request.put("name", collectionName);
+        request.put("database", database);
+
+        String url = "http://localhost:" + Node.getPort() + "/collection/read";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
+        HttpEntity<Object> requestEntity = new HttpEntity<>(request.toString(), headers);
+
+        ResponseEntity<ArrayNode> responseEntity = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                requestEntity,
+                ArrayNode.class
+        );
+        return responseEntity.getBody();
     }
     public void updateCollection(String oldName, String newName, String dbName) {
         ObjectMapper objectMapper = new ObjectMapper();
