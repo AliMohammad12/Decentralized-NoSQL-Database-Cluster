@@ -5,10 +5,9 @@ import atypon.app.node.model.Collection;
 import atypon.app.node.model.Node;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
-import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.IndexingService;
 import atypon.app.node.service.services.JsonService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,14 +52,13 @@ public class CollectionServiceImpl implements CollectionService {
         Path path = getPath().
                 resolve(databaseName)
                 .resolve("Collections");
-        if (!FileOperations.isDirectoryExists(path.toString())) {
-            FileOperations.createDirectory(getPath().resolve(databaseName).toString(), "Collections");
+        if (!DiskOperations.isDirectoryExists(path.toString())) {
+            DiskOperations.createDirectory(getPath().resolve(databaseName).toString(), "Collections");
         }
-        FileOperations.createDirectory(path.toString(), collection.getName());
-        FileOperations.createDirectory(path.resolve(collection.getName()).toString(), "Documents");
-        FileOperations.writeJsonAtLocation(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");
-
-        logger.info("Successfully created collection schema '" +collection.getName() +"' within '" +
+        DiskOperations.createDirectory(path.toString(), collection.getName());
+        DiskOperations.createDirectory(path.resolve(collection.getName()).toString(), "Documents");
+        DiskOperations.writeToFile(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");
+        logger.info("Successfully created collection schema '" + collection.getName() + "' within '" +
                 databaseName + "' database!, schema: \n" + schemaJsonString);
     }
     @Override
@@ -94,18 +92,17 @@ public class CollectionServiceImpl implements CollectionService {
         }
         return fields;
     }
-    // todo: indexing file content should change too + TREE!!!!!
+    // todo: indexing file content should change too + tree!
     @Override
     public void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName) {
         Path path = getPath().
                 resolve(databaseName).
                 resolve("Collections");
-        FileOperations.updateDirectoryName(path.toString(), oldCollectionName, newCollectionName);
+        DiskOperations.updateDirectoryName(path.toString(), oldCollectionName, newCollectionName);
 
         logger.info("Successfully updated the name of '" + oldCollectionName
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
-
     // todo: must clear the B+ Tree (Don't forget)
     @Override
     public void deleteCollection(Collection collection) throws IOException {
@@ -130,7 +127,7 @@ public class CollectionServiceImpl implements CollectionService {
             }
         }
 
-        FileOperations.deleteDirectory(path.toString());
+        DiskOperations.deleteDirectory(path.toString());
         logger.info("Successfully deleted the collection '" + collection.getName() +"' within '" +
                 collection.getDatabase().getName() + "' database!");
     }

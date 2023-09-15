@@ -11,7 +11,7 @@ import java.util.List;
 
 
 // these are CRUD operations of the files and their directory (Synchronized)?
-public class FileOperations {
+public class DiskOperations {
     public static void deleteDirectory(String directory) throws IOException {
         Path directoryToDelete = Paths.get(directory);
         Files.walk(directoryToDelete)
@@ -24,7 +24,7 @@ public class FileOperations {
                     }
                 });
     }
-    public static void writeJsonAtLocation(String json, String directory, String name) {
+    public static void writeToFile(String json, String directory, String name) {
         File file = new File(directory, name);
         try (FileWriter fileWriter = new FileWriter(file)) {
             fileWriter.write(json);
@@ -32,6 +32,11 @@ public class FileOperations {
             e.printStackTrace();
         }
     }
+    public static String readFile(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        return new String(Files.readAllBytes(path));
+    }
+
     public static boolean isDirectoryExists(String directory) {
         File file = new File(directory);
         return file.isDirectory() && file.exists();
@@ -57,10 +62,6 @@ public class FileOperations {
     }
     public static void deleteFile(String filePath) throws IOException {
         Files.delete(Paths.get(filePath));
-    }
-    public static String readFileAsString(String filePath) throws IOException {
-        Path path = Paths.get(filePath);
-        return new String(Files.readAllBytes(path));
     }
     public static void updateDirectoryName(String path, String oldName, String newName) {
         File originalFile = new File(path + "/" + oldName);

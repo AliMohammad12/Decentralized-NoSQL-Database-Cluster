@@ -52,6 +52,7 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
         }
 
+        // todo: make file operations do this
         ObjectNode objectNode = (ObjectNode) documentData;
         String uniqueId = java.util.UUID.randomUUID().toString();
         objectNode.put("id", uniqueId);

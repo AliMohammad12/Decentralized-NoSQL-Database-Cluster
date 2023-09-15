@@ -9,14 +9,13 @@ import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.service.services.*;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLOutput;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -53,7 +50,7 @@ public class DocumentServiceImpl implements DocumentService {
         Path path = Path.of("Storage", Node.getName(), "Users", user.getUsername(), "Databases");
         return path;
     }
-    @Override
+    @Override // WriteJsonAtLocation
     public void addDocument(DocumentRequest request) throws JsonProcessingException {
         JsonNode documentRequest = request.getDocumentNode();
         String collectionName = documentRequest.get("CollectionName").asText();
@@ -61,18 +58,16 @@ public class DocumentServiceImpl implements DocumentService {
         String nodeNameIndexingUpdate = documentRequest.get("NodeName").asText();
         JsonNode document = documentRequest.get("data");
 
-        System.out.println(documentRequest.toPrettyString());
-
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
-        FileOperations.writeJsonAtLocation(jsonString, path.toString(), document.get("id").asText() + ".json");
+        DiskOperations.writeToFile(jsonString, path.toString(), document.get("id").asText() + ".json");
 
         if (nodeNameIndexingUpdate.equals(Node.getName())) {
             indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
         }
         logger.info("Successfully created the document: \n" + document.toPrettyString());
     }
-    @Override
+    @Override // jsonService: read json array
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Reading documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
@@ -122,7 +117,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
         return documentsArray;
     }
-    @Override
+    @Override // deleteFile
     public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException { // DocumentRequestByProperty
         logger.info("Deleting documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
@@ -161,29 +156,29 @@ public class DocumentServiceImpl implements DocumentService {
             if (property.isBooleanValue()) {
                 boolean value = propertyNode.asBoolean();
                 if (property.getValue().equals(value)) {
-                    FileOperations.deleteFile(path.resolve(id+".json").toString());
+                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
                 }
             } else if (property.isDoubleValue()) {
                 double value = propertyNode.asDouble();
                 if (property.getValue().equals(value)) {
-                    FileOperations.deleteFile(path.resolve(id+".json").toString());
+                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
                 }
 
             } else if (property.isIntegerValue()) {
                 int value = propertyNode.asInt();
                 if (property.getValue().equals(value)) {
-                    FileOperations.deleteFile(path.resolve(id+".json").toString());
+                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
                 }
 
             } else if (property.isStringValue()) {
                 String value = propertyNode.asText();
                 if (property.getValue().equals(value)) {
-                    FileOperations.deleteFile(path.resolve(id+".json").toString());
+                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
                 }
             }
         }
     }
-    @Override
+    @Override // Json Service: readJsonNode
     public JsonNode readDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
         logger.info("Reading document with id '" + id + "' in " +
@@ -196,7 +191,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(id + ".json");
         return jsonService.readJsonNode(path.toString());
     }
-    @Override
+    @Override // Delete File
     public void deleteDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
         logger.info("Deleting document with id '" + id + "' in " +
@@ -207,9 +202,9 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(collection)
                 .resolve("Documents")
                 .resolve(id + ".json");
-        FileOperations.deleteFile(path.toString());
+        DiskOperations.deleteFile(path.toString());
     }
-    @Override
+    @Override // Write json at location
     public void updateDocument(DocumentUpdateRequest request) throws IOException { // DocumentUpdateRequest
         JsonNode updateRequest = request.getUpdateRequest();
         String collection = updateRequest.get("CollectionName").asText();
@@ -242,6 +237,7 @@ public class DocumentServiceImpl implements DocumentService {
                 }
                 ((ObjectNode) documentBeforeUpdate).put(fieldName, fieldValue);
             }
+
             ((ObjectNode) documentBeforeUpdate).put("version", versionNumber + 1);
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // pretty-printing
@@ -249,9 +245,12 @@ public class DocumentServiceImpl implements DocumentService {
                     .resolve(database)
                     .resolve("Collections")
                     .resolve(collection)
-                    .resolve("Documents")
-                    .resolve(id + ".json");
-            objectMapper.writeValue(new File(path.toString()), documentBeforeUpdate);
+                    .resolve("Documents");
+
+       //     objectMapper.writeValue(new File(path.toString()), documentBeforeUpdate);
+            String jsonString = jsonService.convertJsonToString(documentBeforeUpdate);
+            // DiskOperations.writeJsonAtLocation(jsonString, path.toString(), document.get("id").asText() + ".json");
+            DiskOperations.writeToFile(jsonString, path.toString(), id + ".json");
         } else {
             throw new OptimisticLockingFailureException("Concurrent update detected for document: '\n" + documentBeforeUpdate.toPrettyString());
         }

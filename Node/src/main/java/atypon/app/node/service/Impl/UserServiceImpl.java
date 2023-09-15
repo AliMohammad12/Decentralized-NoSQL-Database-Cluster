@@ -3,16 +3,12 @@ package atypon.app.node.service.Impl;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.service.services.UserService;
-import atypon.app.node.service.services.ValidatorService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -49,9 +45,9 @@ public class UserServiceImpl implements UserService {
         usersList.add(new User(username, password));
         objectMapper.writeValue(jsonFile, usersList);
 
-        FileOperations.createDirectory(getPath().resolve("Users").toString(), username);
-        FileOperations.createDirectory(getPath().resolve("Users").resolve(username).toString(), "Databases");
-        FileOperations.writeJsonAtLocation("[]", getPath().
+        DiskOperations.createDirectory(getPath().resolve("Users").toString(), username);
+        DiskOperations.createDirectory(getPath().resolve("Users").resolve(username).toString(), "Databases");
+        DiskOperations.writeToFile("[]", getPath().
                 resolve("Users").
                 resolve(username).
                 resolve("Databases").

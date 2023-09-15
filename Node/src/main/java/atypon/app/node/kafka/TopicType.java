@@ -14,9 +14,7 @@ public enum TopicType {
     Create_User("createUserTopic"),
     Create_Indexing("createIndexingTopic"),
     Delete_Indexing("deleteIndexingTopic");
-
     private final String topicValue;
-
     TopicType(String topicValue) {
         this.topicValue = topicValue;
     }

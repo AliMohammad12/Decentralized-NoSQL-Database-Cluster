@@ -6,16 +6,13 @@ import atypon.app.node.indexing.bplustree.BPlusTree;
 import atypon.app.node.model.Collection;
 import atypon.app.node.model.Database;
 import atypon.app.node.model.Node;
-import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.IndexingService;
 import atypon.app.node.service.services.JsonService;
-import atypon.app.node.service.services.UserService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -353,8 +350,8 @@ public class IndexingServiceImpl implements IndexingService {
     }
     public void deleteDocuments(Path path, List<String> documentList) throws IOException {
         for (String id : documentList) {
-            if (FileOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                FileOperations.deleteFile(path.resolve(id + ".json").toString());
+            if (DiskOperations.isFileExists(path.resolve(id + ".json").toString())) {
+                DiskOperations.deleteFile(path.resolve(id + ".json").toString());
                 logger.info("Deleting Document with id: " + id);
             }
         }
@@ -370,7 +367,7 @@ public class IndexingServiceImpl implements IndexingService {
                 String jsonFilePath = path.resolve(id + ".json").toString();
 
                 // instead of doing 2 calls, try doing try-catch
-                if (FileOperations.isFileExists(jsonFilePath)) {
+                if (DiskOperations.isFileExists(jsonFilePath)) {
                     documents.add(jsonService.readJsonNode(jsonFilePath));
                     logger.info("Reading Document with id: " + id);
                 } else {

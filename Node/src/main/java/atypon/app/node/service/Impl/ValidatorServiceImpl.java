@@ -7,12 +7,10 @@ import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
-import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.service.services.ValidatorService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
@@ -23,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +50,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     public ValidatorResponse isDatabaseExists(String databaseName) {
         logger.info("Checking if database '" + databaseName + "' exists!");
         Path path = getPath().resolve(databaseName);
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
+        ValidatorResponse validatorResponse = new ValidatorResponse(DiskOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("Database with the name '" + databaseName + "' exists!");
         } else {
@@ -70,7 +67,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             return validateDatabase;
         }
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isDirectoryExists(path.toString()));
+        ValidatorResponse validatorResponse = new ValidatorResponse(DiskOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("The collection '" + collectionName + "' exists within '" + databaseName + "' database!");
         } else {
@@ -120,7 +117,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         }
         String id = document.get("id").asText();
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection).resolve("Documents").resolve(id + ".json");
-        ValidatorResponse validatorResponse = new ValidatorResponse(FileOperations.isFileExists(path.toString()));
+        ValidatorResponse validatorResponse = new ValidatorResponse(DiskOperations.isFileExists(path.toString()));
         if (validatorResponse.isValid()) {
             validatorResponse.setMessage("The requested document within '" + collection + "' collection exists !");
         } else {

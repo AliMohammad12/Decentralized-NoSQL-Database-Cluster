@@ -3,10 +3,8 @@ package atypon.app.node.service.Impl;
 import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
-import atypon.app.node.security.MyUserDetails;
 import atypon.app.node.service.services.JsonService;
-import atypon.app.node.service.services.UserService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,20 +15,15 @@ import com.github.victools.jsonschema.generator.*;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 public class JsonServiceImpl implements JsonService {
@@ -93,7 +86,7 @@ public class JsonServiceImpl implements JsonService {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // Enables pretty-printing
         return objectMapper.writeValueAsString(jsonNode);
     }
-    @Override
+    @Override // use disk operations here
     public ArrayNode readJsonArray(String path) {
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode documentsArray = objectMapper.createArrayNode();
@@ -115,7 +108,7 @@ public class JsonServiceImpl implements JsonService {
         }
         return documentsArray;
     }
-    @Override
+    @Override // use disk operations here
     public User findByUsername(String username) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -134,7 +127,7 @@ public class JsonServiceImpl implements JsonService {
         return null;
     }
 
-    @Override
+    @Override // reading from file!
     public String getPropertyTypeFromSchema(IndexObject indexObject) {
         ObjectMapper objectMapper = new ObjectMapper();
         String database = indexObject.getDatabase();
@@ -154,7 +147,7 @@ public class JsonServiceImpl implements JsonService {
 
     @Override
     public JsonNode readJsonNode(String path) throws IOException {
-        String jsonContent = FileOperations.readFileAsString(path);
+        String jsonContent = DiskOperations.readFile(path);
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readTree(jsonContent);
     }

@@ -5,7 +5,7 @@ import atypon.app.node.model.Database;
 import atypon.app.node.model.Node;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.DatabaseService;
-import atypon.app.node.utility.FileOperations;
+import atypon.app.node.utility.DiskOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,27 +35,27 @@ public class DatabaseServiceImpl implements DatabaseService {
     @Override
     public void createDatabase(Database database) {
         Path path = getPath();
-        FileOperations.createDirectory(path.toString(), database.getName());
+        DiskOperations.createDirectory(path.toString(), database.getName());
         logger.info("Database with the name '" + database.getName() + "' have been successfully created!");
     }
     @Override
     public List<String> readDatabases() {
         logger.info("Reading all databases!");
         Path path = getPath();
-        return FileOperations.readDirectories(path.toString());
+        return DiskOperations.readDirectories(path.toString());
     }
     @Override
     public List<String> readDatabase(Database database) {
         logger.info("Reading the database with the name: '" + database.getName() + "' !");
         Path path = getPath().resolve(database.getName()).resolve("Collections");
-        return FileOperations.readDirectories(path.toString());
+        return DiskOperations.readDirectories(path.toString());
     }
 
     // todo: indexing file content should change too + TREE!!!!!
     @Override
     public void updateDatabaseName(String oldDatabaseName, String newDatabaseName) {
         Path path = getPath();
-        FileOperations.updateDirectoryName(path.toString(), oldDatabaseName, newDatabaseName);
+        DiskOperations.updateDirectoryName(path.toString(), oldDatabaseName, newDatabaseName);
         logger.info("Database with the name '" + oldDatabaseName + "' have been successfully updated to '" + newDatabaseName + "' !");
     }
 
@@ -70,7 +70,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             collectionService.deleteCollection(collection);
         }
         Path path = getPath().resolve(database.getName());
-        FileOperations.deleteDirectory(path.toString());
+        DiskOperations.deleteDirectory(path.toString());
         logger.info("Database with the name '" + database.getName() + "' have been successfully deleted!");
     }
 }

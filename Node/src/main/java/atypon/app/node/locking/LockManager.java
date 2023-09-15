@@ -16,22 +16,22 @@ public class LockManager {
         valueOps = redisTemplate.opsForValue();
     }
     public void storeLock(final String key, final FileLock fileLock, int time, TimeUnit timeUnit) {
-        valueOps.set(Node.getName() + ":" + key, fileLock, time, timeUnit);
+        valueOps.set(key, fileLock, time, timeUnit);
     }
     public void createAndStoreLock(final String key, final FileLock fileLock, int time, TimeUnit timeUnit) {
-        valueOps.setIfAbsent(Node.getName() + ":" + key, fileLock, time, timeUnit);
+        valueOps.setIfAbsent(key, fileLock, time, timeUnit);
     }
     public FileLock getAndDeleteLock(final String key) {
-        return (FileLock) valueOps.getAndDelete(Node.getName() + ":" + key);
+        return (FileLock) valueOps.getAndDelete(key);
     }
     public FileLock getLock(final String key) {
-        return (FileLock) valueOps.get(Node.getName() + ":" + key);
+        return (FileLock) valueOps.get( key);
     }
     public void deleteLock(final String key) {
-        valueOps.getOperations().delete(Node.getName() + ":" + key);
+        valueOps.getOperations().delete(key);
     }
     public FileLock getLockAndExtendTTL(final String key, int time, TimeUnit timeUnit) {
-        return (FileLock) valueOps.getAndExpire(Node.getName() + ":" + key, time, timeUnit);
+        return (FileLock) valueOps.getAndExpire(key, time, timeUnit);
     }
 }
 
