@@ -9,25 +9,24 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand" href="#">NoSql Database</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    <a class="btn btn-outline-light ml-2" href="/database/list">My Databases</a>
+
+    <a th:if="${database}" th:href="@{'/collection/list?databaseName=' + ${database}}"
+       class="btn btn-outline-light ml-2" th:text="${database}">Dynamic Button</a>
+
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
             <li class="nav-item">
                 <form method="post" action="/database/view" class="form-inline">
                     <input type="hidden" name="databaseName" th:value="${database}">
-                    <span class="navbar-text" th:text="'View ' + ${database}"></span>
-                    <button type="submit" class="btn btn-link nav-link">Go</button>
+                    <button type="submit" class="btn btn-link nav-link"></button>
                 </form>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
             </li>
         </ul>
     </div>
+    <a class="btn btn-outline-light" th:href="@{/logout}">Logout</a>
 </nav>
+
 
 
 <br>
@@ -36,7 +35,7 @@
         <span th:text="${collection}"></span>
         Collection
     </h1>
-
+    <div th:if="${message}" th:text="${message}" class="alert alert-info"></div>
     <table class="table table-bordered">
         <thead>
         <tr>

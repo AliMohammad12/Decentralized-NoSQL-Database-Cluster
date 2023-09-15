@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 
 public interface DocumentService {
-    String addDocument(DocumentRequest request) throws JsonProcessingException;
+    void addDocument(DocumentRequest request) throws JsonProcessingException;
     JsonNode readDocumentProperty(DocumentRequestByProperty documentRequestByProperty) throws IOException;
     void deleteDocumentByProperty(DocumentRequestByProperty documentRequestByProperty) throws IOException;
     JsonNode readDocumentById(String database, String collection, JsonNode document) throws IOException;

@@ -22,11 +22,9 @@ public class IndexingService {
     public IndexingService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
     public void createIndexing(IndexObject indexObject) {
         String url = "http://localhost:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
-
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -40,7 +38,6 @@ public class IndexingService {
                 requestEntity,
                 String.class
         );
-        System.out.println(requestEntity.getBody());
     }
     public void deleteIndexing(IndexObject indexObject) {
         String url = "http://localhost:9000/load-balance/write";
@@ -59,7 +56,6 @@ public class IndexingService {
                 requestEntity,
                 String.class
         );
-        System.out.println(requestEntity.getBody());
     }
     public boolean isIndexed(IndexObject indexObject) {
         String url = "http://localhost:" + Node.getPort() + "/indexing/status";

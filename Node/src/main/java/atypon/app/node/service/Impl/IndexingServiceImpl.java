@@ -35,14 +35,11 @@ import java.util.*;
 public class IndexingServiceImpl implements IndexingService {
     private static final Logger logger = LoggerFactory.getLogger(IndexingService.class);
     private HashMap<IndexObject, BPlusTree> indexRegistry;
-    private final CollectionService collectionService;
     private final JsonService jsonService;
     @Autowired
     public IndexingServiceImpl(@Qualifier("indexRegistry") HashMap<IndexObject, BPlusTree> indexRegistry,
-                               CollectionService collectionService,
                                JsonService jsonService) {
         this.indexRegistry = indexRegistry;
-        this.collectionService = collectionService;
         this.jsonService = jsonService;
     }
     private static Path getPath() {
@@ -79,7 +76,7 @@ public class IndexingServiceImpl implements IndexingService {
             String property = objNode.get("property").asText();
             IndexObject indexObject = new IndexObject(username, database, collection, property);
             createIndexing(indexObject);
-            logger.info("Filling B+Tree with Index: " + indexObject.toString());
+            logger.info("Creating Index: " + indexObject.toString());
         }
     }
     @Override
@@ -135,7 +132,6 @@ public class IndexingServiceImpl implements IndexingService {
             if (isIndexed(indexObject)) {
                 BPlusTree bPlusTree = indexRegistry.get(indexObject);
                 addDocumentToTree(bPlusTree, id, type, node);
-                System.out.println("Field '" + field + "' is indexed, filling the tree with => " + type + " " + node.toPrettyString());
             }
         }
     }
@@ -335,13 +331,25 @@ public class IndexingServiceImpl implements IndexingService {
     @Override
     public void setupIndexing(IndexObject indexObject, BPlusTree bPlusTree, String type) {
         Collection collection = new Collection(indexObject.getCollection(), new Database(indexObject.getDatabase()));
-        ArrayNode jsonArray = collectionService.readCollection(collection);
+        ArrayNode jsonArray = readCollection(collection);
         String property = indexObject.getProperty();
+        logger.info("Setting up indexing for the property '" + type + "'!");
         for (JsonNode element : jsonArray) {
             JsonNode propertyNode = element.get(property);
             String id = element.get("id").asText();
             addDocumentToTree(bPlusTree, id, type, propertyNode);
         }
+    }
+    @Override
+    public ArrayNode readCollection(Collection collection) {
+        logger.info("Reading the collection with the name '" + collection.getName() + "' !");
+        Path path = getPath().
+                resolve("Databases").
+                resolve(collection.getDatabase().getName()).
+                resolve("Collections").
+                resolve(collection.getName()).
+                resolve("Documents");
+        return jsonService.readJsonArray(path.toString());
     }
     public void deleteDocuments(Path path, List<String> documentList) throws IOException {
         for (String id : documentList) {
@@ -360,11 +368,13 @@ public class IndexingServiceImpl implements IndexingService {
             while (iterator.hasNext()) {
                 String id = iterator.next();
                 String jsonFilePath = path.resolve(id + ".json").toString();
+
+                // instead of doing 2 calls, try doing try-catch
                 if (FileOperations.isFileExists(jsonFilePath)) {
                     documents.add(jsonService.readJsonNode(jsonFilePath));
                     logger.info("Reading Document with id: " + id);
                 } else {
-                    iterator.remove(); // --> lazy deletion!
+                    iterator.remove(); // ----------> lazy deletion!
                 }
             }
         }
@@ -372,6 +382,8 @@ public class IndexingServiceImpl implements IndexingService {
     }
 
     private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node) {
+        logger.info("Adding id '" + id + " to the '" + type +"' B+Tree inside " +
+                "the node with value '" + node.asText() + "' !");
         switch (type) {
             case "string" -> {
                 String value = node.asText();

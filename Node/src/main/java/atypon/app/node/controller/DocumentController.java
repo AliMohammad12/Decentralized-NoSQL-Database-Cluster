@@ -106,7 +106,6 @@ public class DocumentController {
     }
     @PostMapping("/update")
     public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) {
-        System.out.println("received !! " + request.getUpdateRequest().toPrettyString());
         JsonNode document = request.getUpdateRequest();
         String collection = document.get("CollectionName").asText();
         String database = document.get("DatabaseName").asText();

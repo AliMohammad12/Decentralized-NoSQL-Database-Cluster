@@ -16,7 +16,6 @@ import java.util.List;
 @SessionAttributes("collectionData")
 public class IndexingController {
     private final IndexingService indexingService;
-
     public IndexingController(IndexingService indexingService) {
         this.indexingService = indexingService;
     }

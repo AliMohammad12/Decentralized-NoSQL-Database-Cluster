@@ -1,10 +1,12 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.model.Collection;
 import atypon.app.node.model.Node;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.DatabaseService;
+import atypon.app.node.service.services.IndexingService;
 import atypon.app.node.service.services.JsonService;
 import atypon.app.node.utility.FileOperations;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,9 +31,12 @@ import java.util.Map;
 public class CollectionServiceImpl implements CollectionService {
     private static final Logger logger = LoggerFactory.getLogger(CollectionService.class);
     private final JsonService jsonService;
+    private final IndexingService indexingService;
     @Autowired
-    public CollectionServiceImpl(JsonService jsonService) {
+    public CollectionServiceImpl(JsonService jsonService,
+                                 IndexingService indexingService) {
         this.jsonService = jsonService;
+        this.indexingService = indexingService;
     }
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -68,7 +73,6 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve("Documents");
         return jsonService.readJsonArray(path.toString());
     }
-
     @Override
     public JsonNode readCollectionFields(Collection collection) throws IOException {
         String database = collection.getDatabase().getName();
@@ -90,7 +94,7 @@ public class CollectionServiceImpl implements CollectionService {
         }
         return fields;
     }
-
+    // todo: indexing file content should change too + TREE!!!!!
     @Override
     public void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName) {
         Path path = getPath().
@@ -102,7 +106,6 @@ public class CollectionServiceImpl implements CollectionService {
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
 
-
     // todo: must clear the B+ Tree (Don't forget)
     @Override
     public void deleteCollection(Collection collection) throws IOException {
@@ -110,6 +113,23 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve(collection.getDatabase().getName()).
                 resolve("Collections").
                 resolve(collection.getName());
+        JsonNode jsonNode = readCollectionFields(collection);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+
+        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = jsonNode.fields();
+        while (fieldsIterator.hasNext()) {
+            Map.Entry<String, JsonNode> fieldEntry = fieldsIterator.next();
+            String fieldName = fieldEntry.getKey();
+
+            IndexObject indexObject = new IndexObject(user.getUsername(), collection.getDatabase().getName(),
+                    collection.getName(), fieldName);
+            if (indexingService.isIndexed(indexObject)) {
+                indexingService.deleteIndexing(indexObject);
+            }
+        }
+
         FileOperations.deleteDirectory(path.toString());
         logger.info("Successfully deleted the collection '" + collection.getName() +"' within '" +
                 collection.getDatabase().getName() + "' database!");

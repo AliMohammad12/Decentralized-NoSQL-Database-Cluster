@@ -80,7 +80,7 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentValid(String database, String collection, JsonNode targetDocument) {
-        logger.info("Checking if the document is valid:" + targetDocument.toPrettyString());
+        logger.info("Checking if the document is valid:\n" + targetDocument.toPrettyString());
 
         // let json service do some action here
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection);

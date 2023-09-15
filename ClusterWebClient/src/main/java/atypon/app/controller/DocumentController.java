@@ -58,7 +58,6 @@ public class DocumentController {
         for (FieldInfo fieldInfo : fieldInfoList) {
             IndexObject indexObject = new IndexObject(UserInfo.getUsername(),
                     databaseName, collectionName, fieldInfo.getFieldName());
-            System.out.println("Is field " + fieldInfo.getFieldName() + " indexed ? " + indexingService.isIndexed(indexObject));
             fieldInfo.setIndexed(indexingService.isIndexed(indexObject));
         }
         model.addAttribute("database", collectionData.getDatabaseName());
@@ -73,15 +72,17 @@ public class DocumentController {
                                  @RequestParam("version") int version,
                                  @RequestParam Map<String, Object> newProperties,
                                  @SessionAttribute("collectionData") CollectionData collectionData,
-                                 Model model) {
-        documentService.updateDocument(id, version, newProperties, collectionData);
+                                 RedirectAttributes redirectAttributes) {
+        String message = documentService.updateDocument(id, version, newProperties, collectionData);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/document/list";
     }
     @PostMapping("/delete")
     public String deleteDocument(@RequestParam("id") String id,
                                  @SessionAttribute("collectionData") CollectionData collectionData,
-                                 Model model) {
-        documentService.updateDocumentById(id, collectionData);
+                                 RedirectAttributes redirectAttributes) {
+        String message = documentService.deleteDocumentById(id, collectionData);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/document/list";
     }
 }

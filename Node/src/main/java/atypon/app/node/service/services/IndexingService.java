@@ -3,6 +3,7 @@ package atypon.app.node.service.services;
 import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.indexing.Property;
 import atypon.app.node.indexing.bplustree.BPlusTree;
+import atypon.app.node.model.Collection;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,6 +16,7 @@ public interface IndexingService {
     void setupIndexing(IndexObject indexObject, BPlusTree<?, List<String>> bPlusTree, String type);
     void indexingInitializer() throws IOException;
     void deleteIndexing(IndexObject indexObject) throws IOException;
+    ArrayNode readCollection(Collection collection);
     void IndexingFinalizer();
     void indexDocumentPropertiesIfExists(String database, String collection, JsonNode document);
     void deleteDocumentByProperty(String database, String collection, Property property) throws IOException;

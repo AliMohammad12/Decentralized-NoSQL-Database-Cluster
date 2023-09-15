@@ -10,32 +10,28 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="#">NoSql Database</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
+  <a class="btn btn-outline-light ml-2" href="/database/list">My Databases</a>
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
         <form method="post" action="/database/view" class="form-inline">
           <input type="hidden" name="databaseName" th:value="${database}">
-          <span class="navbar-text" th:text="'View ' + ${database}"></span>
-          <button type="submit" class="btn btn-link nav-link">Go</button>
+          <button type="submit" class="btn btn-link nav-link"></button>
         </form>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link register-link" th:href="@{/logout}">Logout User</a>
       </li>
     </ul>
   </div>
+  <a class="btn btn-outline-light" th:href="@{/logout}">Logout</a>
 </nav>
 
 
-
 <div class="container mt-4">
-  <h1>Your Collections</h1>
+  <h1>
+    <span th:text="${database}"></span>
+    Collections
+  </h1>
   <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#createCollectionModal">Create Collection</button>
-
+  <div th:if="${message}" th:text="${message}" class="alert alert-info"></div>
   <table class="table">
     <thead>
     <tr>
@@ -64,8 +60,8 @@
     </tr>
     </tbody>
   </table>
-
 </div>
+
 
 <div class="modal fade" id="createCollectionModal" tabindex="-1" role="dialog" aria-labelledby="createCollectionModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">

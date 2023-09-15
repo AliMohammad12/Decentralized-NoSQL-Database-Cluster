@@ -11,6 +11,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class DatabaseService {
     public DatabaseService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-    public void createDatabase(String databaseName) {
+    public String createDatabase(String databaseName) {
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.createObjectNode();
@@ -36,19 +37,11 @@ public class DatabaseService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         String url = "http://localhost:9000/load-balance/write";
 
-
-        // remember to show these to the user!!
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-            logger.info("Database with the name '" + databaseName + "' has been successfully created and will be utilized.");
+            return "Database with the name '" + databaseName + "' has been successfully created!";
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().value() == 400) {
-                logger.warn("An existing database with the name '" + databaseName + "' has been found and will be utilized.");
-            } else if (e.getStatusCode().value() == 401) {
-                logger.error("Invalid credentials! Please use correct credentials!");
-            } else {
-                logger.error("There's an issue within the cluster, please try connecting later!");
-            }
+            return e.getResponseBodyAsString();
         }
     }
     public List<String> readAllDatabases() {
@@ -66,7 +59,7 @@ public class DatabaseService {
 
         return responseEntity.getBody();
     }
-    public void updateDatabase(String oldName, String newName) {
+    public String updateDatabase(String oldName, String newName) {
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.createObjectNode();
@@ -80,9 +73,16 @@ public class DatabaseService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         String url = "http://localhost:9000/load-balance/write";
 
-        restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+        try {
+            restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+            return "Database with the name '" + oldName + "' has been successfully updated to '" + newName + "' !";
+        } catch (HttpClientErrorException e) {
+            return e.getResponseBodyAsString();
+        } catch (HttpServerErrorException e){
+            return "There's an issue within the cluster, please try again!";
+        }
     }
-    public void deleteDatabase(String databaseName) throws Exception {
+    public String deleteDatabase(String databaseName) throws Exception {
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.createObjectNode();
@@ -97,17 +97,9 @@ public class DatabaseService {
 
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-          //  logger.info("Database with the name '" + databaseName + "' has been successfully created and will be utilized.");
+            return "Database with the name '" + databaseName + "' has been successfully deleted!";
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().value() == 400) {
-            //    logger.warn("An existing database with the name '" + databaseName + "' has been found and will be utilized.");
-            } else if (e.getStatusCode().value() == 401) {
-             //   logger.error("Invalid credentials! Please use correct credentials!");
-                throw new Exception();
-            } else {
-              //  logger.error("There's an issue within the cluster, please try connecting later!");
-                throw new Exception();
-            }
+            return e.getResponseBodyAsString();
         }
 
     }

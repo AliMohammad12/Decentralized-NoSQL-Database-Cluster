@@ -38,16 +38,16 @@ public class CollectionController {
                                    @RequestParam("fieldType") List<String> fieldTypes,
                                    @ModelAttribute("database") String databaseName,
                                    RedirectAttributes redirectAttributes) {
-        collectionService.createCollection(databaseName, collectionName, fieldNames, fieldTypes);
-        redirectAttributes.addFlashAttribute("message", "Collection created successfully.");
+        String message = collectionService.createCollection(databaseName, collectionName, fieldNames, fieldTypes);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/collection/list?databaseName=" + databaseName;
     }
     @PostMapping("/delete")
     public String deleteCollection(@RequestParam("collectionName") String collectionName,
                                    @ModelAttribute("database") String databaseName,
                                    RedirectAttributes redirectAttributes) {
-        collectionService.deleteCollection(databaseName, collectionName);
-        redirectAttributes.addFlashAttribute("message", "Collection deleted successfully.");
+        String message = collectionService.deleteCollection(databaseName, collectionName);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/collection/list?databaseName=" + databaseName;
     }
     @PostMapping("/update")
@@ -55,8 +55,8 @@ public class CollectionController {
                                    @RequestParam("newCollectionName") String newCollectionName,
                                    @ModelAttribute("database") String databaseName,
                                    RedirectAttributes redirectAttributes) {
-        collectionService.updateCollection(oldCollectionName, newCollectionName, databaseName);
-        redirectAttributes.addFlashAttribute("message", "Collection updated successfully.");
+        String message = collectionService.updateCollection(oldCollectionName, newCollectionName, databaseName);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/collection/list?databaseName=" + databaseName;
     }
     @PostMapping("/view")
@@ -70,8 +70,8 @@ public class CollectionController {
         Iterator<String> fields = jsonNode.fieldNames();
         while (fields.hasNext()) {
             String fieldName = fields.next();
-            String fieldtype = jsonNode.get(fieldName).asText();
-            fieldInfoList.add(new FieldInfo(fieldName, fieldtype, false));
+            String fieldType = jsonNode.get(fieldName).asText();
+            fieldInfoList.add(new FieldInfo(fieldName, fieldType, false));
         }
 
         CollectionData collectionData = new CollectionData();

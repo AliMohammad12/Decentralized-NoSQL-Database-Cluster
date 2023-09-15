@@ -30,7 +30,7 @@ public class CollectionService {
     public CollectionService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-    public void createCollection(String databaseName, String collectionName,
+    public String createCollection(String databaseName, String collectionName,
                                  List<String> fieldNames, List<String> fieldTypes) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode collection = objectMapper.createObjectNode();
@@ -65,12 +65,11 @@ public class CollectionService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-            logger.info("The collection '" + collectionName + "' has been successfully created!");
+            return "The collection '" + collectionName + "' has been successfully created!";
         }catch (HttpClientErrorException e) {
-            logger.warn("An existing collection with the name '" + collectionName + "' has been found and will be utilized.");
+            return e.getResponseBodyAsString();
         } catch (HttpServerErrorException e) {
-            logger.error("There's an issue within the cluster, cannot create collection, please retry later!");
-           // throw new ClusterOperationalIssueException();
+            return "Cannot create collection, please retry again!";
         }
     }
     public List<String> readAllCollections(String databaseName) {
@@ -138,7 +137,7 @@ public class CollectionService {
         );
         return responseEntity.getBody();
     }
-    public void updateCollection(String oldName, String newName, String dbName) {
+    public String updateCollection(String oldName, String newName, String dbName) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode request = objectMapper.createObjectNode();
         request.put("oldCollectionName", oldName);
@@ -156,15 +155,14 @@ public class CollectionService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-        //    logger.info("The collection '" + collectionName + "' has been successfully deleted!");
+            return "The the name of the collection '" + oldName + "' has been successfully updated to '" + newName + "' !";
         }catch (HttpClientErrorException e) {
-            //  logger.warn("An existing collection with the name '" + collectionName + "' has been found and will be utilized.");
+            return e.getResponseBodyAsString();
         } catch (HttpServerErrorException e) {
-            logger.error("There's an issue within the cluster, cannot create collection, please retry later!");
-            // throw new ClusterOperationalIssueException();
+            return "Cannot update collection, please retry later!";
         }
     }
-    public void deleteCollection(String databaseName, String collectionName) {
+    public String deleteCollection(String databaseName, String collectionName) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode collection = objectMapper.createObjectNode();
         ObjectNode database = objectMapper.createObjectNode();
@@ -185,12 +183,11 @@ public class CollectionService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-            logger.info("The collection '" + collectionName + "' has been successfully deleted!");
+            return "The collection '" + collectionName + "' has been successfully deleted!";
         }catch (HttpClientErrorException e) {
-          //  logger.warn("An existing collection with the name '" + collectionName + "' has been found and will be utilized.");
+            return e.getResponseBodyAsString();
         } catch (HttpServerErrorException e) {
-            logger.error("There's an issue within the cluster, cannot create collection, please retry later!");
-            // throw new ClusterOperationalIssueException();
+            return "Cannot delete collection, please try again!";
         }
     }
 

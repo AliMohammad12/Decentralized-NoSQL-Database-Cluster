@@ -54,12 +54,14 @@ public class DocumentServiceImpl implements DocumentService {
         return path;
     }
     @Override
-    public String addDocument(DocumentRequest request) throws JsonProcessingException {
+    public void addDocument(DocumentRequest request) throws JsonProcessingException {
         JsonNode documentRequest = request.getDocumentNode();
         String collectionName = documentRequest.get("CollectionName").asText();
         String databaseName = documentRequest.get("DatabaseName").asText();
         String nodeNameIndexingUpdate = documentRequest.get("NodeName").asText();
         JsonNode document = documentRequest.get("data");
+
+        System.out.println(documentRequest.toPrettyString());
 
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
@@ -69,7 +71,6 @@ public class DocumentServiceImpl implements DocumentService {
             indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
         }
         logger.info("Successfully created the document: \n" + document.toPrettyString());
-        return document.get("id").asText();
     }
     @Override
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
@@ -243,7 +244,7 @@ public class DocumentServiceImpl implements DocumentService {
             }
             ((ObjectNode) documentBeforeUpdate).put("version", versionNumber + 1);
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // Enables pretty-printing
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // pretty-printing
             Path path = getPath()
                     .resolve(database)
                     .resolve("Collections")

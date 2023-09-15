@@ -33,20 +33,26 @@ public class DatabaseController {
         return "redirect:/collection/list";
     }
     @PostMapping("/delete")
-    public String deleteDatabase(@RequestParam String databaseName) throws Exception {
-        databaseService.deleteDatabase(databaseName);
+    public String deleteDatabase(@RequestParam String databaseName,
+                                 RedirectAttributes redirectAttributes) throws Exception {
+        String message = databaseService.deleteDatabase(databaseName);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/database/list";
     }
     @PostMapping("/create")
-    public String createDatabase(@RequestParam("databaseName") String databaseName) {
-        databaseService.createDatabase(databaseName);
+    public String createDatabase(@RequestParam("databaseName") String databaseName,
+                                 RedirectAttributes redirectAttributes) {
+        String message = databaseService.createDatabase(databaseName);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/database/list";
     }
     @PostMapping("/update")
     public String updateDatabase(
             @RequestParam("oldDatabaseName") String oldDatabaseName,
-            @RequestParam("newDatabaseName") String newDatabaseName){
-        databaseService.updateDatabase(oldDatabaseName, newDatabaseName);
+            @RequestParam("newDatabaseName") String newDatabaseName,
+            RedirectAttributes redirectAttributes){
+        String message = databaseService.updateDatabase(oldDatabaseName, newDatabaseName);
+        redirectAttributes.addFlashAttribute("message", message);
         return "redirect:/database/list";
     }
 }
