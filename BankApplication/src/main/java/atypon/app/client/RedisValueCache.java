@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class RedisValueCache {
+
     private static ConcurrentHashMap<String, Lock> locksMap = new ConcurrentHashMap<>();
     public void writeToFile(String id, String filePath, String content) throws IOException {
         File file = new File(filePath);
@@ -58,7 +59,7 @@ public class RedisValueCache {
         lock.unlock();
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void setup() throws IOException {
         String message = "HelloQ";
         final int numWriters = 10;

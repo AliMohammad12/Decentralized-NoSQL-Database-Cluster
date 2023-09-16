@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class WriteRequestsService {
     private final RestTemplate restTemplate;
+
     @Autowired
     public WriteRequestsService(@Qualifier("writeRequestsBean") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -26,12 +27,17 @@ public class WriteRequestsService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(user.getUsername(), user.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
-
         try {
-            return restTemplate.exchange(
+            Thread.sleep(25);
+            ResponseEntity<?> response = restTemplate.exchange(
                     "http://NODE/"+endpoint, HttpMethod.POST, requestEntity, String.class);
+            return response;
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal error occurred during the delay.");
         }
     }
 }

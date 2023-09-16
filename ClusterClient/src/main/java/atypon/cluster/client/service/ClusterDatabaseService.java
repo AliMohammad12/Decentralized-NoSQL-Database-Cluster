@@ -1,5 +1,6 @@
 package atypon.cluster.client.service;
 
+import atypon.cluster.client.exception.RequestTimeoutException;
 import atypon.cluster.client.models.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.InvalidUserCredentialsException;
@@ -17,6 +18,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 @Component
 @DependsOn("clusterConnectionService")
@@ -30,8 +34,22 @@ public class ClusterDatabaseService {
         this.restTemplate = restTemplate;
     }
     @PostConstruct
-    private void init() {
-        createDatabase();
+    private void init() throws InterruptedException {
+//        for (int j = 0; j < 10; j++) {
+//            ExecutorService executor = Executors.newFixedThreadPool(1);
+//            for (int i = 0; i < 1; i++) {
+//                executor.execute(() -> {
+//                    createDatabase();
+//                });
+//            }
+//
+//            ExecutorService executor2 = Executors.newFixedThreadPool(1);
+//            for (int i = 0; i < 1; i++) {
+//                executor2.execute(() -> {
+//                    createDatabase();
+//                });
+//            }
+//        }
     }
     private void createDatabase() {
         DatabaseInfo.setName(databaseName);
@@ -46,7 +64,6 @@ public class ClusterDatabaseService {
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
         String url = "http://localhost:9000/load-balance/write";
-
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
             logger.info("Database with the name '" + databaseName + "' has been successfully created and will be utilized.");
@@ -56,8 +73,11 @@ public class ClusterDatabaseService {
             } else if (e.getStatusCode().value() == 401) {
                 logger.error("Invalid credentials! Please use correct credentials!");
                 throw new InvalidUserCredentialsException();
+            } else if (e.getStatusCode().value() == 408) {
+                logger.error(e.getResponseBodyAsString());
+                throw new RequestTimeoutException(e.getResponseBodyAsString());
             } else {
-                logger.error("There's an issue within the cluster, please try connecting later!");
+                logger.error(e.getResponseBodyAsString());
                 throw new ClusterOperationalIssueException();
             }
         }

@@ -13,7 +13,9 @@ public enum TopicType {
     Update_Document("updateDocumentTopic"),
     Create_User("createUserTopic"),
     Create_Indexing("createIndexingTopic"),
-    Delete_Indexing("deleteIndexingTopic");
+    Delete_Indexing("deleteIndexingTopic"),
+    Share_locking("shareLockingTopic"),
+    Remove_lock("removeLockTopic");
     private final String topicValue;
     TopicType(String topicValue) {
         this.topicValue = topicValue;

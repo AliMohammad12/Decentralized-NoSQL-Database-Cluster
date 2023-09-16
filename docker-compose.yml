@@ -42,16 +42,16 @@ services:
     container_name: redis2
     ports:
       - "6380:6379"
-  redis3:
-    image: redis
-    container_name: redis3
-    ports:
-      - "6381:6379"
-  redis4:
-    image: redis
-    container_name: redis4
-    ports:
-      - "6382:6379"
+#  redis3:
+#    image: redis
+#    container_name: redis3
+#    ports:
+#      - "6381:6379"
+#  redis4:
+#    image: redis
+#    container_name: redis4
+#    ports:
+#      - "6382:6379"
 
   load-balancer:
     build: ./LoadBalancer
@@ -104,40 +104,40 @@ services:
     links:
       - eureka-server
 
-  node3:
-    build: ./Node
-    container_name: node3
-    environment:
-      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
-      - NODE_ID=3
-      - NODE_NAME=Node3
-      - NODE_PORT=8083
-      - REDIS_HOST=redis3
-    volumes:
-      - ./Storage/Node3:/app/Storage/Node3
-      - ./Storage/Node3/Users:/app/Storage/Node3/Users
-    ports:
-      - "8083:8080"
-    depends_on:
-      - eureka-server
-    links:
-      - eureka-server
-
-  node4:
-    build: ./Node
-    container_name: node4
-    environment:
-      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
-      - NODE_ID=4
-      - NODE_NAME=Node4
-      - NODE_PORT=8084
-      - REDIS_HOST=redis4
-    volumes:
-      - ./Storage/Node4:/app/Storage/Node4
-      - ./Storage/Node4/Users:/app/Storage/Node4/Users
-    ports:
-      - "8084:8080"
-    depends_on:
-      - eureka-server
-    links:
-      - eureka-server
+#  node3:
+#    build: ./Node
+#    container_name: node3
+#    environment:
+#      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
+#      - NODE_ID=3
+#      - NODE_NAME=Node3
+#      - NODE_PORT=8083
+#      - REDIS_HOST=redis3
+#    volumes:
+#      - ./Storage/Node3:/app/Storage/Node3
+#      - ./Storage/Node3/Users:/app/Storage/Node3/Users
+#    ports:
+#      - "8083:8080"
+#    depends_on:
+#      - eureka-server
+#    links:
+#      - eureka-server
+#
+#  node4:
+#    build: ./Node
+#    container_name: node4
+#    environment:
+#      - eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka
+#      - NODE_ID=4
+#      - NODE_NAME=Node4
+#      - NODE_PORT=8084
+#      - REDIS_HOST=redis4
+#    volumes:
+#      - ./Storage/Node4:/app/Storage/Node4
+#      - ./Storage/Node4/Users:/app/Storage/Node4/Users
+#    ports:
+#      - "8084:8080"
+#    depends_on:
+#      - eureka-server
+#    links:
+#      - eureka-server

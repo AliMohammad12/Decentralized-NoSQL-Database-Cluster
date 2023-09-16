@@ -6,6 +6,7 @@ import atypon.app.node.model.Node;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.DatabaseService;
 import atypon.app.node.utility.DiskOperations;
+import io.lettuce.core.ScriptOutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

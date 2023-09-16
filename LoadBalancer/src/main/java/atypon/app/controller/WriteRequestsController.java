@@ -16,7 +16,8 @@ public class WriteRequestsController {
         this.writeRequestsService = writeRequestsService;
     }
     @PostMapping("/write")
-    public ResponseEntity<?> handleWriteRequest(@RequestBody WriteRequest writeRequest) {
+    public ResponseEntity<?> handleWriteRequest(@RequestBody WriteRequest writeRequest) throws InterruptedException {
+        Thread.sleep(50);
         return writeRequestsService.sendWriteRequest(
                 writeRequest.getRequestData(),
                 writeRequest.getEndpoint(),

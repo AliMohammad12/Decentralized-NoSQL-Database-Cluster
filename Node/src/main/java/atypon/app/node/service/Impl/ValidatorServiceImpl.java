@@ -56,6 +56,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         } else {
             validatorResponse.setMessage("Database with the name '" + databaseName + "' does not exist!");
         }
+        logger.info(validatorResponse.getMessage());
         return validatorResponse;
     }
     @Override
@@ -64,6 +65,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         ValidatorResponse validateDatabase = isDatabaseExists(databaseName);
         if (!validateDatabase.isValid()) {
             validateDatabase.setMessage("Database with the name '" + databaseName + "' doesn't exist!");
+            logger.info(validateDatabase.getMessage());
             return validateDatabase;
         }
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
@@ -73,6 +75,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         } else {
             validatorResponse.setMessage("The collection '" + collectionName + "' does not exist within '" + databaseName + "' database!");
         }
+        logger.info(validatorResponse.getMessage());
         return validatorResponse;
     }
     @Override
@@ -101,6 +104,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             }
         }
         validatorResponse.setMessage(validatorMessage);
+        logger.info(validatorResponse.getMessage());
         return validatorResponse;
     }
     @Override
@@ -113,6 +117,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             return validateCollection;
         }
         if (document.get("id") == null) {
+            logger.info("Invalid Document, Please send the Id!");
             return new ValidatorResponse("Invalid Document, Please send the Id!", false);
         }
         String id = document.get("id").asText();
@@ -123,6 +128,7 @@ public class ValidatorServiceImpl implements ValidatorService {
         } else {
             validatorResponse.setMessage("The requested document within '" + collection + "' collection doesn't exist !");
         }
+        logger.info(validatorResponse.getMessage());
         return validatorResponse;
     }
     @Override
@@ -133,6 +139,7 @@ public class ValidatorServiceImpl implements ValidatorService {
             return validatorResponse;
         }
         if (documentInfo.get("version") == null) {
+            logger.info("Update request invalid, Please include the 'version' in the document info");
             return new ValidatorResponse("Update request invalid, Please include the 'version' in the document info", false);
         }
         ObjectMapper objectMapper = new ObjectMapper();
@@ -153,6 +160,7 @@ public class ValidatorServiceImpl implements ValidatorService {
 
             JsonNode jsonNode = schema.getSchemaNode().get("properties").get(fieldName);
             if (jsonNode == null) {
+                logger.info("The requested property '" + fieldName + "' doesn't exist in the collection!");
                 return new ValidatorResponse("The requested property '" + fieldName + "' doesn't exist in the collection!", false);
             }
             String type = jsonNode.get("type").asText();
@@ -166,9 +174,11 @@ public class ValidatorServiceImpl implements ValidatorService {
             } else if (type.equals("boolean") && fieldValue.isBoolean()) {
                 valid = true;
             } else {
+                logger.info("The type of the property '{"+ fieldName + ", " + fieldValue + "}' doesn't match the schema type '" + type + "'!");
                 return new ValidatorResponse("The type of the property '{"+ fieldName + ", " + fieldValue + "}' doesn't match the schema type '" + type + "'!", false);
             }
         }
+        logger.info("Update request valid!");
         return new ValidatorResponse("Update request valid!", true);
     }
     @Override

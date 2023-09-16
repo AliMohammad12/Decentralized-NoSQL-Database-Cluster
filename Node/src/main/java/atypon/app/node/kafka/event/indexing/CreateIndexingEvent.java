@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 @RequiredArgsConstructor
 public class CreateIndexingEvent extends WriteEvent {
     private IndexObject indexObject;
-
     public CreateIndexingEvent(IndexObject indexObject) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
