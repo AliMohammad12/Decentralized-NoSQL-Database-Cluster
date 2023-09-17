@@ -33,8 +33,10 @@ public class ShareLockListener implements EventListener {
         ShareLockEvent shareLockEvent = (ShareLockEvent) event;
         if (Node.getName().equals(shareLockEvent.getNodeName())) return;
         final String key = shareLockEvent.getKey();
+        String lockType =  shareLockEvent.getValue();
         int time = shareLockEvent.getTime();
-        logger.info("Saving lock with key '" + key + "' in '" + redisHostName + "' for '" + time + "' seconds!");
-        valueOps.setIfAbsent(key, key, time, TimeUnit.SECONDS);
+        logger.info("Saving lock '" + lockType + "' with key '" +
+                key + "' in '" + redisHostName + "' for '" + time + "' seconds!");
+        valueOps.setIfAbsent(key, lockType, time, TimeUnit.SECONDS);
     }
 }

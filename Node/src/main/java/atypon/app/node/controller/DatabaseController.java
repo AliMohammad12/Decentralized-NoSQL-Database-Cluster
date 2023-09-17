@@ -51,7 +51,7 @@ public class DatabaseController {
         Database database = request.getDatabase();
         LockExecutionResult<?> result = null;
         try {
-            result = distributedLocker.lock("Database:"+database.getName(), 10, 5, () -> {
+            result = distributedLocker.databaseWriteLock(database.getName(), 50, 55, () -> {
                 ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
                 if (validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
@@ -73,12 +73,22 @@ public class DatabaseController {
     }
     @RequestMapping("/read/database")
     public ResponseEntity<?> readDatabase(@RequestBody Database database) {
-        ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+        String databaseName = database.getName();
+        LockExecutionResult<?> result = null;
+        try {
+            result = distributedLocker.databaseReadLock(database.getName(), 50, 55, () -> {
+                ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
+                if (!validatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+                }
+                return ResponseEntity.ok(databaseService.readDatabase(database));
+            });
+          //  ResponseEntity<?> responseEntity = (ResponseEntity<?>) result.resultIfLockAcquired;
+         //   logger.info("Database reading response -> " + responseEntity.getBody());
+            return (ResponseEntity<?>) result.resultIfLockAcquired;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + " " + "Request timeout, Please try again!");
         }
-        List<String> collectionsList = databaseService.readDatabase(database);
-        return ResponseEntity.ok(collectionsList);
     }
     @PostMapping("/update")
     public ResponseEntity<?> updateDatabase(@RequestBody DatabaseUpdateRequest request) {
@@ -86,7 +96,7 @@ public class DatabaseController {
         String newDatabaseName = request.getNewDatabaseName();
         LockExecutionResult<?> result = null;
         try {
-            result = distributedLocker.lock("Database:"+oldDatabaseName, 12, 7, () -> {
+            result = distributedLocker.databaseWriteLock(oldDatabaseName, 12, 7, () -> {
                 ValidatorResponse oldDbValidatorResponse = validatorService.isDatabaseExists(oldDatabaseName);
                 if (!oldDbValidatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(oldDbValidatorResponse.getMessage());
@@ -110,7 +120,7 @@ public class DatabaseController {
         Database database = request.getDatabase();
         LockExecutionResult<?> result = null;
         try {
-            result = distributedLocker.lock("Database:"+database.getName(), 15, 10, () -> {
+            result = distributedLocker.databaseWriteLock(database.getName(), 15, 10, () -> {
                 ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());
                 if (!validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());

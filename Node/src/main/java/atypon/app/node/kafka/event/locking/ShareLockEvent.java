@@ -10,11 +10,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ShareLockEvent extends WriteEvent {
     private String key;
+    private String value;
     private int time;
     private String nodeName;
-    public ShareLockEvent(String key, int time) {
+    public ShareLockEvent(String key, String value, int time) {
         this.key = key;
         this.time = time;
+        this.value = value;
         this.nodeName = Node.getName();
     }
 }

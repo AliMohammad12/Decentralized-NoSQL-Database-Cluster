@@ -35,7 +35,8 @@ public class CreateDatabaseListener implements EventListener {
         DatabaseRequest request = createDatabaseEvent.getDatabaseRequest();
         Database database = request.getDatabase();
         databaseService.createDatabase(database);
+
         // release
-        distributedLocker.releaseLock(database.getName());
+        distributedLocker.releaseLock("Database:"+database.getName());
     }
 }
