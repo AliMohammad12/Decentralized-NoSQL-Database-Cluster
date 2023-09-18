@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 public class CreateDatabaseListener implements EventListener {
     private final DatabaseService databaseService;
     private final DistributedLocker distributedLocker;
+    private final String DB_PREFIX = "DATABASE_LOCK:";
+
     @Autowired
     public CreateDatabaseListener(DatabaseService databaseService,
                                   DistributedLocker distributedLocker) {
@@ -37,6 +39,6 @@ public class CreateDatabaseListener implements EventListener {
         databaseService.createDatabase(database);
 
         // release
-        distributedLocker.releaseLock("Database:"+database.getName());
+        distributedLocker.releaseWriteLock(DB_PREFIX + database.getName());
     }
 }

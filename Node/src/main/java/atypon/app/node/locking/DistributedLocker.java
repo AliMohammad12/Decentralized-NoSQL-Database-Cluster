@@ -5,8 +5,6 @@ import atypon.app.node.kafka.KafkaService;
 import atypon.app.node.kafka.TopicType;
 import atypon.app.node.kafka.event.locking.RemoveLockEvent;
 import atypon.app.node.kafka.event.locking.ShareLockEvent;
-import atypon.app.node.model.Node;
-import io.lettuce.core.ScriptOutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +43,8 @@ public class DistributedLocker {
 
 
     //  Read locks: These locks allow concurrent read operations, but prevent write operations.
-    public <T> LockExecutionResult<T> readLock(final String key,
-                                           final int howLongShouldLockBeAcquiredSeconds,
+    private <T> LockExecutionResult<T> readLock(final String key,
+                                           final int maximumWaitingTimeToAcquireLock,
                                            final int lockTimeoutSeconds,
                                            final Callable<T> task) throws Exception {
         return tryToGetLock(() -> {
@@ -54,22 +52,20 @@ public class DistributedLocker {
             if (!acquireReadLock(key, lockTimeoutSeconds)) {
                 return null;
             }
-            sleep(30000);
             try {
                 T taskResult = task.call();
-                kafkaService.broadCast(TopicType.Remove_lock, new RemoveLockEvent(key));
-                sleep(150);
+                releaseReadLock(key);
                 return LockExecutionResult.buildLockAcquiredResult(taskResult);
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 return LockExecutionResult.buildLockAcquiredWithException(e);
             }
-        }, key, howLongShouldLockBeAcquiredSeconds);
+        }, key, maximumWaitingTimeToAcquireLock);
     }
 
     //  Write locks: These locks prevent both read and write operations, so it has to acquire both.
-    public <T> LockExecutionResult<T> writeLock(final String key,
-                                           final int howLongShouldLockBeAcquiredSeconds,
+    private <T> LockExecutionResult<T> writeLock(final String key,
+                                           final int maximumWaitingTimeToAcquireLock,
                                            final int lockTimeoutSeconds,
                                            final Callable<T> task) throws Exception {
         return tryToGetLock(() -> {
@@ -77,7 +73,6 @@ public class DistributedLocker {
                 return null;
             }
             final long startTime = TimeUnit.SECONDS.toMillis(lockTimeoutSeconds);
-            sleep(30000);
             try {
                 T taskResult = task.call();
                 ResponseEntity<?> response = (ResponseEntity<?>) taskResult;
@@ -102,45 +97,146 @@ public class DistributedLocker {
                 LOG.error(e.getMessage(), e);
                 return LockExecutionResult.buildLockAcquiredWithException(e);
             }
-        }, key, howLongShouldLockBeAcquiredSeconds);
+        }, key, maximumWaitingTimeToAcquireLock);
     }
+
 
     public <T> LockExecutionResult<T> databaseReadLock(final String dbName,
-                                                final int howLongShouldLockBeAcquiredSeconds,
+                                                final int maximumWaitingTimeToAcquireLock,
                                                 final int lockTimeoutSeconds,
                                                 final Callable<T> task) throws Exception {
-        return readLock(DB_PREFIX + dbName, howLongShouldLockBeAcquiredSeconds, lockTimeoutSeconds, task);
+        return readLock(DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
     }
     public <T> LockExecutionResult<T> databaseWriteLock(final String dbName,
-                                                       final int howLongShouldLockBeAcquiredSeconds,
+                                                       final int maximumWaitingTimeToAcquireLock,
                                                        final int lockTimeoutSeconds,
                                                        final Callable<T> task) throws Exception {
-        return writeLock(DB_PREFIX + dbName, howLongShouldLockBeAcquiredSeconds, lockTimeoutSeconds, task);
+        return writeLock(DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
     }
+
+
 
     public <T> LockExecutionResult<T> collectionReadLock(final String dbName, final String collectionName,
-                                                       final int howLongShouldLockBeAcquiredSeconds,
+                                                       final int maximumWaitingTimeToAcquireLock,
                                                        final int lockTimeoutSeconds,
                                                        final Callable<T> task) throws Exception {
-        if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds)) {
-            return null;
-        }
-        // acquired lock DB Lock!
-        return readLock(COLLECTION_PREFIX + collectionName, howLongShouldLockBeAcquiredSeconds, lockTimeoutSeconds, task);
+        return tryToGetLock(() -> {
+            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 5)) { // hold for extra time
+                return null;
+            }
+            try {
+                LockExecutionResult<T> result = readLock(COLLECTION_PREFIX + collectionName,
+                        maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+                releaseReadLock(DB_PREFIX + dbName);
+                return result;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                return LockExecutionResult.buildLockAcquiredWithException(e);
+            }
+        }, DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock);
     }
     public <T> LockExecutionResult<T> collectionWriteLock(final String dbName, final String collectionName,
-                                                        final int howLongShouldLockBeAcquiredSeconds,
+                                                        final int maximumWaitingTimeToAcquireLock,
                                                         final int lockTimeoutSeconds,
                                                         final Callable<T> task) throws Exception {
-
-        if (!acquireReadLock(DB_PREFIX + dbName, lockTimeoutSeconds)) {
-            return null;
-        }
-        // acquired lock DB Lock!
-        return writeLock(COLLECTION_PREFIX + collectionName, howLongShouldLockBeAcquiredSeconds, lockTimeoutSeconds, task);
+        return tryToGetLock(() -> {
+            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 5)) { // hold for extra time
+                return null;
+            }
+            try {
+                LockExecutionResult<T> result = writeLock(COLLECTION_PREFIX + collectionName,
+                        maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+                releaseReadLock(DB_PREFIX + dbName);
+                return result;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                return LockExecutionResult.buildLockAcquiredWithException(e);
+            }
+        }, DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock);
     }
 
 
+
+    public <T> LockExecutionResult<T> documentReadLock(final String dbName, final String collectionName, final String id,
+                                                         final int maximumWaitingTimeToAcquireLock,
+                                                         final int lockTimeoutSeconds,
+                                                         final Callable<T> task) throws Exception {
+        return tryToGetLock(() -> {
+            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 10)) { // hold for extra time
+                return null;
+            }
+            // DB lock acquired
+            try {
+                return tryToGetLock(() -> {
+                    if (!acquireReadLock(COLLECTION_PREFIX + collectionName,  lockTimeoutSeconds + 5)) { // hold for extra time
+                        return null;
+                    }
+                    // Collection lock acquired
+                    try {
+                        // Document lock
+                        LockExecutionResult<T> result = readLock(DOCUMENT_PREFIX + id,
+                                maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+
+                        releaseReadLock(DB_PREFIX + dbName);
+                        releaseReadLock(COLLECTION_PREFIX + collectionName);
+                        return result;
+                    } catch (Exception e) {
+                        LOG.error(e.getMessage(), e);
+                        return LockExecutionResult.buildLockAcquiredWithException(e);
+                    }
+                }, COLLECTION_PREFIX + collectionName, maximumWaitingTimeToAcquireLock);
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                return LockExecutionResult.buildLockAcquiredWithException(e);
+            }
+        }, DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock);
+    }
+    public <T> LockExecutionResult<T> documentWriteLock(final String dbName, final String collectionName, final String id,
+                                                          final int maximumWaitingTimeToAcquireLock,
+                                                          final int lockTimeoutSeconds,
+                                                          final Callable<T> task) throws Exception {
+        return tryToGetLock(() -> {
+            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 10)) { // hold for extra time
+                return null;
+            }
+            // DB lock acquired
+            try {
+                return tryToGetLock(() -> {
+                    if (!acquireReadLock(COLLECTION_PREFIX + collectionName,  lockTimeoutSeconds + 5)) { // hold for extra time
+                        return null;
+                    }
+                    // Collection lock acquired
+                    try {
+                        // Document lock
+                        LockExecutionResult<T> result = writeLock(DOCUMENT_PREFIX + id,
+                                maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+
+                        releaseReadLock(DB_PREFIX + dbName);
+                        releaseReadLock(COLLECTION_PREFIX + collectionName);
+                        return result;
+                    } catch (Exception e) {
+                        LOG.error(e.getMessage(), e);
+                        return LockExecutionResult.buildLockAcquiredWithException(e);
+                    }
+                }, COLLECTION_PREFIX + collectionName, maximumWaitingTimeToAcquireLock);
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+                return LockExecutionResult.buildLockAcquiredWithException(e);
+            }
+        }, DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock);
+    }
+
+
+    public void releaseReadLock(final String key) {
+        LOG.info("Releasing Read lock for '{}'", key);
+        long activeReadOperations = valueOps.decrement(key + ":counter", 1);
+        LOG.info("Number of active read operations acquiring '" + key + "' lock = " + activeReadOperations);
+        if (activeReadOperations == 0) {
+            kafkaService.broadCast(TopicType.Remove_lock, new RemoveLockEvent(key));
+            valueOps.getOperations().delete(key + ":counter");
+            sleep(200);
+        }
+    }
 
     private boolean acquireReadLock(String lockKey, int lockTimeoutSeconds) {
         final Boolean lockAcquired = valueOps.setIfAbsent(lockKey, "ReadLock", lockTimeoutSeconds, TimeUnit.SECONDS);
@@ -151,8 +247,11 @@ public class DistributedLocker {
                 return false;
             }
         }
-        LOG.info("Successfully acquired {} lock for key '{}'", "ReadLock", lockKey);
+        LOG.info("Successfully acquired '{}' lock for key '{}'", "ReadLock", lockKey);
+        long activeReadOps = (long)valueOps.increment(lockKey + ":counter", 1);
+        LOG.info("Active read operations: '{}' for '{}' lock", (activeReadOps), (lockKey));
         kafkaService.broadCast(TopicType.Share_locking, new ShareLockEvent(lockKey, "ReadLock", lockTimeoutSeconds));
+        sleep(200);
         return true;
     }
 
@@ -164,13 +263,15 @@ public class DistributedLocker {
         }
         LOG.info("Successfully acquired {} lock for key '{}'", "WriteLock", lockKey);
         kafkaService.broadCast(TopicType.Share_locking, new ShareLockEvent(lockKey, "WriteLock", lockTimeoutSeconds));
+        sleep(200);
         return true;
     }
 
-    public void releaseLock(final String key) {
-        LOG.info("Releasing Read-Write lock for '{}'", key);
+    public void releaseWriteLock(final String key) {
+        LOG.info("Releasing Write lock for '{}'", key);
         valueOps.getOperations().delete(key);
     }
+
     private static <T> T tryToGetLock(final Supplier<T> task,
                                       final String lockKey,
                                       final int howLongShouldLockBeAcquiredSeconds) throws Exception {

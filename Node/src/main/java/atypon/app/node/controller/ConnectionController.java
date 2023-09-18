@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.concurrent.SynchronousQueue;
 
 @RestController
 @RequestMapping("/auth")
@@ -29,7 +30,7 @@ public class ConnectionController {
         return ResponseEntity.ok(new NodeInfo(Node.getPort(), Node.getNodeId(), Node.getName()));
     }
     @PostMapping("/disconnect")
-    public ResponseEntity<?> disconnect(@RequestBody User user)  {
+    public ResponseEntity<?> disconnect(@RequestBody User user) {
         logger.info("Disconnecting user: " + user.getUsername());
         indexingService.IndexingFinalizer();
         return ResponseEntity.ok("Successfully disconnected from the node!");

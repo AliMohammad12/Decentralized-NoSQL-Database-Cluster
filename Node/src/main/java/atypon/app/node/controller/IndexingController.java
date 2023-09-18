@@ -39,7 +39,7 @@ public class IndexingController {
         this.kafkaService = kafkaService;
     }
     @PostMapping("/create")
-    public ResponseEntity<?> createIndexing(@RequestBody IndexObject indexObject) {
+    public synchronized ResponseEntity<?> createIndexing(@RequestBody IndexObject indexObject) {
         ValidatorResponse validatorResponse = validatorService.isIndexCreationAllowed(indexObject);
         if (!validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
@@ -49,7 +49,7 @@ public class IndexingController {
                 " Index for property '" + indexObject.getProperty() + "' has been created successfully!");
     }
     @PostMapping("/delete")
-    public ResponseEntity<?> deleteIndexing(@RequestBody IndexObject indexObject) {
+    public synchronized ResponseEntity<?> deleteIndexing(@RequestBody IndexObject indexObject) {
         ValidatorResponse validatorResponse = validatorService.IsIndexDeletionAllowed(indexObject);
         if (!validatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
@@ -59,7 +59,7 @@ public class IndexingController {
                 " Index for property '" + indexObject.getProperty() + "' has been deleted successfully!");
     }
     @PostMapping("/status")
-    public ResponseEntity<Boolean> indexStatus(@RequestBody IndexObject indexObject) {
+    public synchronized ResponseEntity<Boolean> indexStatus(@RequestBody IndexObject indexObject) {
         boolean isIndexed = indexingService.isIndexed(indexObject);
         logger.info("Indexing status of '" + indexObject + "' = " + isIndexed);
         return ResponseEntity.ok(isIndexed);

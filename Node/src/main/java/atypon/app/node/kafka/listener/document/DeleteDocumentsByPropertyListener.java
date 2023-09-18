@@ -3,6 +3,7 @@ package atypon.app.node.kafka.listener.document;
 import atypon.app.node.kafka.event.document.DeleteDocumentsByPropertyEvent;
 import atypon.app.node.kafka.event.WriteEvent;
 import atypon.app.node.kafka.listener.EventListener;
+import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.service.services.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +12,18 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+
+// TODO: don't forget to handle releasing lock here
 @Component
 public class DeleteDocumentsByPropertyListener implements EventListener {
     private final DocumentService documentService;
+    private final DistributedLocker distributedLocker;
+    private final String DOCUMENT_PREFIX = "DOCUMENT_LOCK:";
     @Autowired
-    public DeleteDocumentsByPropertyListener(DocumentService documentService) {
+    public DeleteDocumentsByPropertyListener(DocumentService documentService,
+                                             DistributedLocker distributedLocker) {
         this.documentService = documentService;
+        this.distributedLocker = distributedLocker;
     }
     @Override
     @KafkaListener(topics = "deleteDocumentsByPropertyTopic")

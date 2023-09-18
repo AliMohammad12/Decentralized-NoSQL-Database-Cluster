@@ -46,7 +46,7 @@ public class UserController {
         valueOps = redisTemplate.opsForValue();
     }
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody UserRequest request) throws IOException {
+    public synchronized ResponseEntity<String> registerUser(@RequestBody UserRequest request) throws IOException {
         User user = request.getUser();
         ValidatorResponse validatorResponse = validatorService.isUsernameExists(user.getUsername());
         if (validatorResponse.isValid()) {

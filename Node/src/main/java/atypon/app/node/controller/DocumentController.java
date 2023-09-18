@@ -6,13 +6,18 @@ import atypon.app.node.kafka.event.document.CreateDocumentEvent;
 import atypon.app.node.kafka.event.document.DeleteDocumentByIdEvent;
 import atypon.app.node.kafka.event.document.DeleteDocumentsByPropertyEvent;
 import atypon.app.node.kafka.event.document.UpdateDocumentEvent;
+import atypon.app.node.locking.DistributedLocker;
+import atypon.app.node.locking.LockExecutionResult;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.services.*;
+import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,16 +31,20 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/document")
 public class DocumentController {
+    private static final Logger logger = LoggerFactory.getLogger(DocumentController.class);
     private final DocumentService documentService;
     private final ValidatorService validatorService;
     private final KafkaService kafkaService;
+    private final DistributedLocker distributedLocker;
     @Autowired
     public DocumentController(DocumentService documentService,
                               ValidatorService validatorService,
-                              KafkaService kafkaService) {
+                              KafkaService kafkaService,
+                              DistributedLocker distributedLocker) {
         this.documentService = documentService;
         this.validatorService = validatorService;
         this.kafkaService = kafkaService;
+        this.distributedLocker = distributedLocker;
     }
     @PostMapping("/create")
     public ResponseEntity<String> createDocument(@RequestBody DocumentRequest request) {
@@ -43,31 +52,43 @@ public class DocumentController {
         String collectionName = document.get("CollectionName").asText();
         String databaseName = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
-        ValidatorResponse collectionValidatorResponse = validatorService.isCollectionExists(databaseName, collectionName);
-        if (!collectionValidatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidatorResponse.getMessage());
-        }
-        ValidatorResponse documentValidatorResponse = validatorService.isDocumentValid(databaseName, collectionName, documentData);
-        if (!documentValidatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
-        }
-
-        // todo: make file operations do this
         ObjectNode objectNode = (ObjectNode) documentData;
         String uniqueId = java.util.UUID.randomUUID().toString();
         objectNode.put("id", uniqueId);
         objectNode.put("version", 1);
         documentData = objectNode;
 
-        kafkaService.broadCast(TopicType.Create_Document, new CreateDocumentEvent(request));
-        return ResponseEntity.status(HttpStatus.OK).body(uniqueId);
+        try {
+            JsonNode finalDocumentData = documentData;
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(databaseName, collectionName, uniqueId, 10, 5, () -> {
+                ValidatorResponse collectionValidatorResponse = validatorService.isCollectionExists(databaseName, collectionName);
+                if (!collectionValidatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidatorResponse.getMessage());
+                }
+                ValidatorResponse documentValidatorResponse = validatorService.isDocumentValid(databaseName, collectionName, finalDocumentData);
+                if (!documentValidatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
+                }
+
+                kafkaService.broadCast(TopicType.Create_Document, new CreateDocumentEvent(request));
+                return ResponseEntity.status(HttpStatus.OK).body(uniqueId);
+            });
+            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
+            logger.info("Document creation response -> " + responseEntity.getBody());
+            return responseEntity;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
+        }
     }
+    // todo: Locking must be done here.
     @RequestMapping("/read-property") // Fully Okay
     public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
         ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
         if (!documentValidatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
         }
+
+        // Special case
         return ResponseEntity.ok(documentService.readDocumentProperty(request));
     }
     @PostMapping("/read-id") // Fully Ok
@@ -76,34 +97,56 @@ public class DocumentController {
         String collection = document.get("CollectionName").asText();
         String database = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
-        ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+        String id = documentData.get("id").asText();
+        try {
+            LockExecutionResult<?> result = distributedLocker.documentReadLock(database, collection, id, 10, 5, () -> {
+                ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
+                if (!validatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+                }
+                return ResponseEntity.ok(documentService.readDocumentById(database, collection, documentData));
+            });
+            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
+            logger.info("Document reading response -> " + responseEntity.getBody());
+            return responseEntity;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
-        return ResponseEntity.ok(documentService.readDocumentById(database, collection, documentData));
     }
+    // todo: Locking must be done here.
     @PostMapping("/delete-property") // Fully Okay!
     public ResponseEntity<?> deleteDocumentsByProperty(@RequestBody DocumentRequestByProperty request) {
         ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
         if (!documentValidatorResponse.isValid()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
         }
+
+        // Special case
         kafkaService.broadCast(TopicType.Delete_Documents_ByProperty, new DeleteDocumentsByPropertyEvent(request));
         return ResponseEntity.ok("Document has been deleted successfully!");
     }
-
-    @RequestMapping("/delete-id") // Fully Ok
+    @RequestMapping("/delete-id")
     public ResponseEntity<?> deleteDocumentById(@RequestBody DocumentRequest request) {
         JsonNode document = request.getDocumentNode();
         String collection = document.get("CollectionName").asText();
         String database = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
-        ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(validatorResponse.getMessage());
+        String id = documentData.get("id").asText();
+        try {
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database, collection, id, 10, 5, () -> {
+                ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
+                if (!validatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+                }
+                kafkaService.broadCast(TopicType.Delete_Document_ById, new DeleteDocumentByIdEvent(request));
+                return ResponseEntity.ok("Document has been deleted successfully!");
+            });
+            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
+            logger.info("Document deletion by id response -> " + responseEntity.getBody());
+            return responseEntity;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
-        kafkaService.broadCast(TopicType.Delete_Document_ById, new DeleteDocumentByIdEvent(request));
-        return ResponseEntity.ok("Document has been deleted successfully!");
     }
     @PostMapping("/update")
     public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) {
@@ -112,13 +155,22 @@ public class DocumentController {
         String database = document.get("DatabaseName").asText();
         JsonNode documentInfo = document.get("info");
         JsonNode documentData = document.get("data");
-        ValidatorResponse validatorResponse = validatorService
-                .isDocumentUpdateRequestValid(database, collection, documentData, documentInfo);
-        if (!validatorResponse.isValid()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+        String id = documentInfo.get("id").asText();
+        try {
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database, collection, id, 10, 5, () -> {
+                ValidatorResponse validatorResponse = validatorService
+                        .isDocumentUpdateRequestValid(database, collection, documentData, documentInfo);
+                if (!validatorResponse.isValid()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
+                }
+                kafkaService.broadCast(TopicType.Update_Document, new UpdateDocumentEvent(request));
+                return ResponseEntity.ok("Document has been updated successfully!");
+            });
+            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
+            logger.info("Document Update by id response -> " + responseEntity.getBody());
+            return responseEntity;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
-        kafkaService.broadCast(TopicType.Update_Document, new UpdateDocumentEvent(request));
-        return ResponseEntity.ok("Document has been updated successfully!");
     }
-
 }
