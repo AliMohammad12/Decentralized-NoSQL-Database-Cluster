@@ -133,70 +133,58 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
     @Override
-    public void deleteDocumentByProperty(String database, String collection, Property property) throws IOException {
-        logger.info("Deleting documents in database '" + database + "' within collection '"
+    public boolean isIndexed(IndexObject indexObject) {
+        return indexRegistry.containsKey(indexObject);
+    }
+
+    @Override // Fixed! TEST Result:
+    public List<String> retrieveAndRemoveByProperty(String database, String collection, Property property)  {
+        logger.info("Retrieving documents and removing them from tree " +
+                "in database '" + database + "' within collection '"
                 + collection + "' with property '" + property.toString() + "' !" );
         String username = getUsername();
         IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
         BPlusTree bPlusTree = indexRegistry.get(indexObject);
-        Path path = getPath()
-                .resolve("Databases")
-                .resolve(database)
-                .resolve("Collections")
-                .resolve(collection)
-                .resolve("Documents");
 
-        List<String> documentList;
+        List<String> documentList = null;
         if (property.isIntegerValue()) {
             int value = (int) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                deleteDocuments(path, documentList);
                 logger.info("Deleting B+Tree Node with value: " + value);
                 bPlusTree.delete(value);
             }
         } else if (property.isDoubleValue()) {
             double value = (double) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
-
             if (documentList != null) {
-                deleteDocuments(path, documentList);
                 logger.info("Deleting B+Tree Node with value: " + value);
                 bPlusTree.delete(value);
             }
         } else if (property.isStringValue()) {
             String value = (String) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
-
             if (documentList != null) {
-                deleteDocuments(path, documentList);
                 logger.info("Deleting B+Tree Node with value: " + value);
                 bPlusTree.delete(value);
             }
         } else if (property.isBooleanValue()) {
             boolean value = (boolean) property.getValue();
-
             documentList = (List<String>) bPlusTree.search(value);
             if (documentList != null) {
-                deleteDocuments(path, documentList);
                 logger.info("Deleting B+Tree Node with value: " + value);
                 bPlusTree.delete(value);
             }
         }
+        return documentList;
     }
     @Override
-    public ArrayNode readDocumentsByProperty(String database, String collection, Property property) throws IOException {
-        logger.info("Reading documents in database '" + database + "' within collection '"
+    public List<String> retrieveByProperty(String database, String collection, Property property) throws IOException {
+        logger.info("Retrieving documents in database '" + database + "' within collection '"
                 + collection + "' with property '" + property.toString() + "' !" );
         String username = getUsername();
         IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
         BPlusTree bPlusTree = indexRegistry.get(indexObject);
-        Path path = getPath()
-                .resolve("Databases")
-                .resolve(database)
-                .resolve("Collections")
-                .resolve(collection)
-                .resolve("Documents");
 
         List<String> documentList = null;
         if (property.isIntegerValue()) {
@@ -215,11 +203,7 @@ public class IndexingServiceImpl implements IndexingService {
             boolean value = (boolean) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
         }
-        return readDocuments(path, documentList);
-    }
-    @Override
-    public boolean isIndexed(IndexObject indexObject) {
-        return indexRegistry.containsKey(indexObject);
+        return documentList;
     }
 
     @Override
@@ -326,7 +310,7 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
     @Override
-    public void setupIndexing(IndexObject indexObject, BPlusTree bPlusTree, String type) {
+    public void setupIndexing(IndexObject indexObject, BPlusTree bPlusTree, String type) throws IOException {
         Collection collection = new Collection(indexObject.getCollection(), new Database(indexObject.getDatabase()));
         ArrayNode jsonArray = readCollection(collection);
         String property = indexObject.getProperty();
@@ -338,7 +322,7 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
     @Override
-    public ArrayNode readCollection(Collection collection) {
+    public ArrayNode readCollection(Collection collection) throws IOException {
         logger.info("Reading the collection with the name '" + collection.getName() + "' !");
         Path path = getPath().
                 resolve("Databases").
@@ -348,38 +332,38 @@ public class IndexingServiceImpl implements IndexingService {
                 resolve("Documents");
         return jsonService.readJsonArray(path.toString());
     }
-    public void deleteDocuments(Path path, List<String> documentList) throws IOException {
-        for (String id : documentList) {
-            if (DiskOperations.isFileExists(path.resolve(id + ".json").toString())) {
-                DiskOperations.deleteFile(path.resolve(id + ".json").toString());
-                logger.info("Deleting Document with id: " + id);
-            }
-        }
-    }
-    public ArrayNode readDocuments(Path path, List<String> documentList) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayNode documents = objectMapper.createArrayNode();
-
-        if (documentList != null) {
-            Iterator<String> iterator = documentList.iterator();
-            while (iterator.hasNext()) {
-                String id = iterator.next();
-                String jsonFilePath = path.resolve(id + ".json").toString();
-
-                // instead of doing 2 calls, try doing try-catch
-                if (DiskOperations.isFileExists(jsonFilePath)) {
-                    documents.add(jsonService.readJsonNode(jsonFilePath));
-                    logger.info("Reading Document with id: " + id);
-                } else {
-                    iterator.remove(); // ----------> lazy deletion!
-                }
-            }
-        }
-        return documents;
-    }
+//    public void deleteDocuments(Path path, List<String> documentList) throws IOException {
+//        for (String id : documentList) {
+//            if (DiskOperations.isFileExists(path.resolve(id + ".json").toString())) {
+//                DiskOperations.deleteFile(path.resolve(id + ".json").toString());
+//                logger.info("Deleting Document with id: " + id);
+//            }
+//        }
+//    }
+//    public ArrayNode readDocuments(Path path, List<String> documentList) throws IOException {
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        ArrayNode documents = objectMapper.createArrayNode();
+//
+//        if (documentList != null) {
+//            Iterator<String> iterator = documentList.iterator();
+//            while (iterator.hasNext()) {
+//                String id = iterator.next();
+//                String jsonFilePath = path.resolve(id + ".json").toString();
+//
+//                // instead of doing 2 calls, try doing try-catch
+//                if (DiskOperations.isFileExists(jsonFilePath)) {
+//                    documents.add(jsonService.readJsonNode(jsonFilePath));
+//                    logger.info("Reading Document with id: " + id);
+//                } else {
+//                    iterator.remove(); // ----------> lazy deletion!
+//                }
+//            }
+//        }
+//        return documents;
+//    }
 
     private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node) {
-        logger.info("Adding id '" + id + " to the '" + type +"' B+Tree inside " +
+        logger.info("Adding id '" + id + " to the '" + node.toString() + "' B+Tree inside " +
                 "the node with value '" + node.asText() + "' !");
         switch (type) {
             case "string" -> {

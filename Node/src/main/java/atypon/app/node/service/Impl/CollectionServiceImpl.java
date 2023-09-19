@@ -62,7 +62,7 @@ public class CollectionServiceImpl implements CollectionService {
                 databaseName + "' database!, schema: \n" + schemaJsonString);
     }
     @Override
-    public ArrayNode readCollection(Collection collection) {
+    public ArrayNode readCollection(Collection collection) throws IOException {
         logger.info("Reading the collection with the name '" + collection.getName() + "' !");
         Path path = getPath().
                 resolve(collection.getDatabase().getName()).

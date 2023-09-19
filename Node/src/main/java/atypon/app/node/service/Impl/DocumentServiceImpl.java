@@ -2,8 +2,7 @@ package atypon.app.node.service.Impl;
 
 import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.indexing.Property;
-import atypon.app.node.model.Collection;
-import atypon.app.node.model.Database;
+import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.model.Node;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentUpdateRequest;
@@ -27,7 +26,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -35,14 +36,14 @@ public class DocumentServiceImpl implements DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
     private final JsonService jsonService;
     private final IndexingService indexingService;
-    private final CollectionService collectionService;
+    private final DistributedLocker distributedLocker;
     @Autowired
     public DocumentServiceImpl(JsonService jsonService
-                               ,IndexingService indexingService
-                                ,CollectionService collectionService) {
+                               , IndexingService indexingService,
+                               DistributedLocker distributedLocker) {
         this.jsonService = jsonService;
         this.indexingService = indexingService;
-        this.collectionService = collectionService;
+        this.distributedLocker = distributedLocker;
     }
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -50,7 +51,8 @@ public class DocumentServiceImpl implements DocumentService {
         Path path = Path.of("Storage", Node.getName(), "Users", user.getUsername(), "Databases");
         return path;
     }
-    @Override // WriteJsonAtLocation
+
+    @Override // Done + Tested
     public void addDocument(DocumentRequest request) throws JsonProcessingException {
         JsonNode documentRequest = request.getDocumentNode();
         String collectionName = documentRequest.get("CollectionName").asText();
@@ -67,7 +69,8 @@ public class DocumentServiceImpl implements DocumentService {
         }
         logger.info("Successfully created the document: \n" + document.toPrettyString());
     }
-    @Override // jsonService: read json array
+
+    @Override // DONE, Pending: Caching + locking test
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Reading documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
@@ -78,11 +81,6 @@ public class DocumentServiceImpl implements DocumentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
-        IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
-        if (indexingService.isIndexed(indexObject)) {
-            return indexingService.readDocumentsByProperty(databaseName, collectionName, property);
-        }
-
         Path path = getPath().resolve(databaseName)
                 .resolve("Collections")
                 .resolve(collectionName)
@@ -90,35 +88,41 @@ public class DocumentServiceImpl implements DocumentService {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode documentsArray = objectMapper.createArrayNode();
-        ArrayNode arrayNode = jsonService.readJsonArray(path.toString());
-        for (JsonNode element : arrayNode) {
-            JsonNode propertyNode = element.get(property.getName());
-            if (propertyNode.isBoolean() && property.isBooleanValue()) {
-                boolean value = propertyNode.asBoolean();
-                if (property.getValue().equals(value)) {
-                    documentsArray.add(element);
-                }
-            } else if (propertyNode.isDouble() && property.isDoubleValue()) {
-                double value = propertyNode.asDouble();
-                if (property.getValue().equals(value)) {
-                    documentsArray.add(element);
-                }
-            } else if (propertyNode.isInt() && property.isIntegerValue()) {
-                int value = propertyNode.asInt();
-                if (property.getValue().equals(value)) {
-                    documentsArray.add(element);
-                }
-            } else if (propertyNode.isTextual() && property.isStringValue()) {
-                String value = propertyNode.asText();
-                if (property.getValue().equals(value)) {
-                    documentsArray.add(element);
+        IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
+        if (indexingService.isIndexed(indexObject)) {
+            List<String> documentsId =  indexingService.retrieveByProperty(databaseName, collectionName, property);
+            documentsArray = jsonService.readAsJsonArray(documentsId, path); // do locking on readAsJsonArray
+        } else {
+            ArrayNode arrayNode = jsonService.readJsonArray(path.toString());  // do locking here too
+            for (JsonNode element : arrayNode) {
+                JsonNode propertyNode = element.get(property.getName());
+                if (propertyNode.isBoolean() && property.isBooleanValue()) {
+                    boolean value = propertyNode.asBoolean();
+                    if (property.getValue().equals(value)) {
+                        documentsArray.add(element);
+                    }
+                } else if (propertyNode.isDouble() && property.isDoubleValue()) {
+                    double value = propertyNode.asDouble();
+                    if (property.getValue().equals(value)) {
+                        documentsArray.add(element);
+                    }
+                } else if (propertyNode.isInt() && property.isIntegerValue()) {
+                    int value = propertyNode.asInt();
+                    if (property.getValue().equals(value)) {
+                        documentsArray.add(element);
+                    }
+                } else if (propertyNode.isTextual() && property.isStringValue()) {
+                    String value = propertyNode.asText();
+                    if (property.getValue().equals(value)) {
+                        documentsArray.add(element);
+                    }
                 }
             }
         }
         return documentsArray;
     }
-    @Override // deleteFile
-    public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException { // DocumentRequestByProperty
+    @Override // DONE, Pending: Locking + Caching test!
+    public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Deleting documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
         String collectionName = request.getCollection();
@@ -129,56 +133,54 @@ public class DocumentServiceImpl implements DocumentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
-        IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
-        if (nodeNameIndexingUpdate.equals(Node.getName())) {
-            if (indexingService.isIndexed(indexObject)) {
-                indexingService.deleteDocumentByProperty(databaseName, collectionName, property);
-                return;
-            }
-        }
-
         Path path = getPath().resolve(databaseName)
                 .resolve("Collections")
                 .resolve(collectionName)
                 .resolve("Documents");
 
+        List<String> documentsId = new ArrayList<>();
+        IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
+        if (nodeNameIndexingUpdate.equals(Node.getName()) && indexingService.isIndexed(indexObject)) {
+            documentsId = indexingService.retrieveAndRemoveByProperty(databaseName, collectionName, property);
+        } else {
+            ArrayNode jsonArray = jsonService.readJsonArray(path.toString());
+            for (JsonNode element : jsonArray) {
+                JsonNode propertyNode = element.get(property.getName());
+                String id = element.get("id").asText();
 
-        // todo: must remove the deleted ID's from the tree --> lazy deletion
-        //  when we read a document from the tree we iterate at the list and
-        //  delete the id's that don't exist. (DONE)
+                if (property.isBooleanValue()) {
+                    boolean value = propertyNode.asBoolean();
+                    if (property.getValue().equals(value)) {
+                        documentsId.add(id);
+                    }
+                } else if (property.isDoubleValue()) {
+                    double value = propertyNode.asDouble();
+                    if (property.getValue().equals(value)) {
+                        documentsId.add(id);
+                    }
 
-        Collection collection = new Collection(collectionName, new Database(databaseName));
-        ArrayNode jsonArray = collectionService.readCollection(collection);
-        for (JsonNode element : jsonArray) {
-            JsonNode propertyNode = element.get(property.getName());
-            String id = element.get("id").asText();
+                } else if (property.isIntegerValue()) {
+                    int value = propertyNode.asInt();
+                    if (property.getValue().equals(value)) {
+                        documentsId.add(id);
+                    }
 
-            if (property.isBooleanValue()) {
-                boolean value = propertyNode.asBoolean();
-                if (property.getValue().equals(value)) {
-                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
-                }
-            } else if (property.isDoubleValue()) {
-                double value = propertyNode.asDouble();
-                if (property.getValue().equals(value)) {
-                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
-                }
-
-            } else if (property.isIntegerValue()) {
-                int value = propertyNode.asInt();
-                if (property.getValue().equals(value)) {
-                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
-                }
-
-            } else if (property.isStringValue()) {
-                String value = propertyNode.asText();
-                if (property.getValue().equals(value)) {
-                    DiskOperations.deleteFile(path.resolve(id+".json").toString());
+                } else if (property.isStringValue()) {
+                    String value = propertyNode.asText();
+                    if (property.getValue().equals(value)) {
+                        documentsId.add(id);
+                    }
                 }
             }
         }
+
+        for (String id : documentsId) {
+            // delete here!
+            // Either from disk or from cache + consider locking
+             DiskOperations.deleteFile(path.resolve(id+".json").toString());
+        }
     }
-    @Override // Json Service: readJsonNode
+    @Override // DONE + Tested
     public JsonNode readDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
         logger.info("Reading document with id '" + id + "' in " +
@@ -191,7 +193,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(id + ".json");
         return jsonService.readJsonNode(path.toString());
     }
-    @Override // Delete File
+    @Override // Done + Tested
     public void deleteDocumentById(String database, String collection, JsonNode document) throws IOException {
         String id = document.get("id").asText();
         logger.info("Deleting document with id '" + id + "' in " +
@@ -204,8 +206,8 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(id + ".json");
         DiskOperations.deleteFile(path.toString());
     }
-    @Override // Write json at location
-    public void updateDocument(DocumentUpdateRequest request) throws IOException { // DocumentUpdateRequest
+    @Override // working
+    public void updateDocument(DocumentUpdateRequest request) throws IOException {
         JsonNode updateRequest = request.getUpdateRequest();
         String collection = updateRequest.get("CollectionName").asText();
         String database = updateRequest.get("DatabaseName").asText();
@@ -240,16 +242,14 @@ public class DocumentServiceImpl implements DocumentService {
 
             ((ObjectNode) documentBeforeUpdate).put("version", versionNumber + 1);
             ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // pretty-printing
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
             Path path = getPath()
                     .resolve(database)
                     .resolve("Collections")
                     .resolve(collection)
                     .resolve("Documents");
 
-       //     objectMapper.writeValue(new File(path.toString()), documentBeforeUpdate);
             String jsonString = jsonService.convertJsonToString(documentBeforeUpdate);
-            // DiskOperations.writeJsonAtLocation(jsonString, path.toString(), document.get("id").asText() + ".json");
             DiskOperations.writeToFile(jsonString, path.toString(), id + ".json");
         } else {
             throw new OptimisticLockingFailureException("Concurrent update detected for document: '\n" + documentBeforeUpdate.toPrettyString());

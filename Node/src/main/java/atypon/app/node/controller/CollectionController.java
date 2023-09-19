@@ -7,6 +7,7 @@ import atypon.app.node.kafka.event.collection.DeleteCollectionEvent;
 import atypon.app.node.kafka.event.collection.UpdateCollectionEvent;
 import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.locking.LockExecutionResult;
+import atypon.app.node.locking.RedisCachingService;
 import atypon.app.node.model.Collection;
 import atypon.app.node.model.Database;
 import atypon.app.node.request.collection.CollectionRequest;
@@ -16,33 +17,30 @@ import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.ValidatorService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 @RestController
 @RequestMapping("/collection")
 public class CollectionController {
-    private static final Logger logger = LoggerFactory.getLogger(CollectionController.class);
     private final CollectionService collectionService;
     private final ValidatorService validatorService;
     private final KafkaService kafkaService;
     private final DistributedLocker distributedLocker;
+    private final RedisCachingService redisCachingService;
     @Autowired
     public CollectionController(CollectionService collectionService,
                                 ValidatorService validatorService,
                                 KafkaService kafkaService,
-                                DistributedLocker distributedLocker) {
+                                DistributedLocker distributedLocker,
+                                RedisCachingService redisCachingService) {
         this.collectionService = collectionService;
         this.validatorService = validatorService;
         this.kafkaService = kafkaService;
         this.distributedLocker = distributedLocker;
+        this.redisCachingService = redisCachingService;
     }
     @RequestMapping("/create")
     public ResponseEntity<?> createCollection(@RequestBody CreateCollectionRequest request)  {
@@ -50,7 +48,7 @@ public class CollectionController {
         Collection collection = collectionSchema.getCollection();
         Database database = collection.getDatabase();
         try {
-            LockExecutionResult<?> result = distributedLocker.collectionWriteLock(database.getName(), collection.getName(), 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.collectionWriteLock(database.getName() , collection.getName(), 10, 5, () -> {
                 ValidatorResponse validatorResponse = validatorService.isCollectionExists(database.getName(), collection.getName());
                 if (validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
@@ -58,9 +56,7 @@ public class CollectionController {
                 kafkaService.broadCast(TopicType.Create_Collection, new CreateCollectionEvent(request));
                 return ResponseEntity.ok("Collection created successfully!");
             });
-            ResponseEntity<?> responseEntity = (ResponseEntity<?>) result.resultIfLockAcquired;
-            logger.info("Collection creation response -> " + responseEntity.getBody());
-            return responseEntity;
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
@@ -68,16 +64,23 @@ public class CollectionController {
     @PostMapping(value = "/read")
     public ResponseEntity<?> readCollection(@RequestBody Collection collection) {
         Database database = collection.getDatabase();
-        LockExecutionResult<?> result = null;
+        String collectionCacheKey = database.getName()+"/"+collection.getName();
+        if (redisCachingService.isCached(collectionCacheKey)) {
+            Object cachedValue = redisCachingService.getCachedValue(collectionCacheKey);
+            redisCachingService.cache(collectionCacheKey, cachedValue, 30);
+            return ResponseEntity.ok(cachedValue);
+        }
         try {
-            result = distributedLocker.collectionReadLock(database.getName(), collection.getName(), 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.collectionReadLock(database.getName(), collection.getName(), 10, 5, () -> {
                 ValidatorResponse collectionValidator = validatorService.isCollectionExists(database.getName(), collection.getName());
                 if (!collectionValidator.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidator.getMessage());
                 }
                 return ResponseEntity.ok(collectionService.readCollection(collection));
             });
-            return (ResponseEntity<?>)result.resultIfLockAcquired;
+            ResponseEntity<?> responseEntity = (ResponseEntity<?>)result.resultIfLockAcquired;
+            redisCachingService.cache(collectionCacheKey, responseEntity.getBody(), 30);
+            return responseEntity;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
@@ -85,6 +88,12 @@ public class CollectionController {
     @PostMapping(value = "/read-fields")
     public ResponseEntity<?> readCollectionFields(@RequestBody Collection collection)  {
         Database database = collection.getDatabase();
+        String fieldsCacheKey = database.getName() +"/fields/"+collection.getName();
+        if (redisCachingService.isCached(fieldsCacheKey)) {
+            Object cachedValue = redisCachingService.getCachedValue(fieldsCacheKey);
+            redisCachingService.cache(fieldsCacheKey, cachedValue, 30);
+            return ResponseEntity.ok(cachedValue);
+        }
         try {
             LockExecutionResult<?> result = distributedLocker.collectionReadLock(database.getName(), collection.getName(), 10, 5, () -> {
                 ValidatorResponse collectionValidator = validatorService.isCollectionExists(database.getName(), collection.getName());
@@ -93,7 +102,9 @@ public class CollectionController {
                 }
                 return ResponseEntity.ok(collectionService.readCollectionFields(collection));
             });
-            return (ResponseEntity<?>)result.resultIfLockAcquired;
+            ResponseEntity<?> responseEntity = (ResponseEntity<?>)result.resultIfLockAcquired;
+            redisCachingService.cache(fieldsCacheKey, responseEntity.getBody(), 30);
+            return responseEntity;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
@@ -116,14 +127,12 @@ public class CollectionController {
                 kafkaService.broadCast(TopicType.Update_Collection, new UpdateCollectionEvent(request));
                 return ResponseEntity.ok("Collection name has been updated successfully!");
             });
-            ResponseEntity<?> responseEntity = (ResponseEntity<?>) result.resultIfLockAcquired;
-            logger.info("Collection update response -> " + responseEntity.getBody());
-            return responseEntity;
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
-    @RequestMapping("/delete")  // todo: must clear the B+ Tree (Don't forget): DONE
+    @RequestMapping("/delete")
     public ResponseEntity<?> deleteCollection(@RequestBody CollectionRequest request)  {
         Collection collection = request.getCollection();
         String databaseName = collection.getDatabase().getName();
@@ -136,9 +145,15 @@ public class CollectionController {
                 kafkaService.broadCast(TopicType.Delete_Collection, new DeleteCollectionEvent(request));
                 return ResponseEntity.ok("Collection has been deleted successfully!");
             });
-            ResponseEntity<?> responseEntity = (ResponseEntity<?>) result.resultIfLockAcquired;
-            logger.info("Collection delete response -> " + responseEntity.getBody());
-            return responseEntity;
+            String collectionCacheKey = databaseName + "/" + collection.getName();
+            if (redisCachingService.isCached(collectionCacheKey)) {
+                redisCachingService.deleteCachedValue(collectionCacheKey);
+            }
+            String fieldsCacheKey = databaseName + "/fields/" + collection.getName();
+            if (redisCachingService.isCached(fieldsCacheKey)) {
+                redisCachingService.deleteCachedValue(fieldsCacheKey);
+            }
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }

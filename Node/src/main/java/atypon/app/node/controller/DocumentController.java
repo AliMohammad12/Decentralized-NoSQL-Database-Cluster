@@ -8,16 +8,14 @@ import atypon.app.node.kafka.event.document.DeleteDocumentsByPropertyEvent;
 import atypon.app.node.kafka.event.document.UpdateDocumentEvent;
 import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.locking.LockExecutionResult;
+import atypon.app.node.locking.RedisCachingService;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
 import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.service.services.*;
-import atypon.app.node.utility.DiskOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,20 +29,22 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/document")
 public class DocumentController {
-    private static final Logger logger = LoggerFactory.getLogger(DocumentController.class);
     private final DocumentService documentService;
     private final ValidatorService validatorService;
     private final KafkaService kafkaService;
     private final DistributedLocker distributedLocker;
+    private final RedisCachingService redisCachingService;
     @Autowired
     public DocumentController(DocumentService documentService,
                               ValidatorService validatorService,
                               KafkaService kafkaService,
-                              DistributedLocker distributedLocker) {
+                              DistributedLocker distributedLocker,
+                              RedisCachingService redisCachingService) {
         this.documentService = documentService;
         this.validatorService = validatorService;
         this.kafkaService = kafkaService;
         this.distributedLocker = distributedLocker;
+        this.redisCachingService = redisCachingService;
     }
     @PostMapping("/create")
     public ResponseEntity<String> createDocument(@RequestBody DocumentRequest request) {
@@ -52,35 +52,34 @@ public class DocumentController {
         String collectionName = document.get("CollectionName").asText();
         String databaseName = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
-        ObjectNode objectNode = (ObjectNode) documentData;
         String uniqueId = java.util.UUID.randomUUID().toString();
+
+        JsonNode docToValidate = documentData.deepCopy();
+        ObjectNode objectNode = (ObjectNode) documentData;
         objectNode.put("id", uniqueId);
         objectNode.put("version", 1);
-        documentData = objectNode;
 
         try {
-            JsonNode finalDocumentData = documentData;
-            LockExecutionResult<?> result = distributedLocker.documentWriteLock(databaseName, collectionName, uniqueId, 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(databaseName ,
+                    collectionName, uniqueId, 10, 5, () -> {
                 ValidatorResponse collectionValidatorResponse = validatorService.isCollectionExists(databaseName, collectionName);
                 if (!collectionValidatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidatorResponse.getMessage());
                 }
-                ValidatorResponse documentValidatorResponse = validatorService.isDocumentValid(databaseName, collectionName, finalDocumentData);
+                ValidatorResponse documentValidatorResponse = validatorService.isDocumentValid(databaseName, collectionName, docToValidate);
                 if (!documentValidatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(documentValidatorResponse.getMessage());
                 }
-
                 kafkaService.broadCast(TopicType.Create_Document, new CreateDocumentEvent(request));
+                redisCachingService.cache(uniqueId, documentData, 60);
                 return ResponseEntity.status(HttpStatus.OK).body(uniqueId);
             });
-            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
-            logger.info("Document creation response -> " + responseEntity.getBody());
-            return responseEntity;
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
-    // todo: Locking must be done here.
+    // todo: Locking must be done here + caching
     @RequestMapping("/read-property") // Fully Okay
     public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
         ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
@@ -92,28 +91,33 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.readDocumentProperty(request));
     }
     @PostMapping("/read-id") // Fully Ok
-    public ResponseEntity<?> readDocumentById(@RequestBody DocumentRequest request) throws IOException {
+    public ResponseEntity<?> readDocumentById(@RequestBody DocumentRequest request){
         JsonNode document = request.getDocumentNode();
         String collection = document.get("CollectionName").asText();
         String database = document.get("DatabaseName").asText();
         JsonNode documentData = document.get("data");
         String id = documentData.get("id").asText();
         try {
-            LockExecutionResult<?> result = distributedLocker.documentReadLock(database, collection, id, 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.documentReadLock(database ,
+                    collection, id, 10, 5, () -> {
                 ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
                 if (!validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
                 }
+                if (redisCachingService.isCached(id)) {
+                    JsonNode cachedDocument = (JsonNode) redisCachingService.getCachedValue(id);
+                    redisCachingService.cache(id, cachedDocument, 60);
+                    return cachedDocument;
+                }
                 return ResponseEntity.ok(documentService.readDocumentById(database, collection, documentData));
             });
-            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
-            logger.info("Document reading response -> " + responseEntity.getBody());
+            ResponseEntity<?> responseEntity = (ResponseEntity<?>) result.resultIfLockAcquired;
             return responseEntity;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
-    // todo: Locking must be done here.
+    // todo: Locking must be done here + caching
     @PostMapping("/delete-property") // Fully Okay!
     public ResponseEntity<?> deleteDocumentsByProperty(@RequestBody DocumentRequestByProperty request) {
         ValidatorResponse documentValidatorResponse = validatorService.isDocumentRequestValid(request);
@@ -133,21 +137,25 @@ public class DocumentController {
         JsonNode documentData = document.get("data");
         String id = documentData.get("id").asText();
         try {
-            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database, collection, id, 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database,
+                    collection, id, 10, 5, () -> {
                 ValidatorResponse validatorResponse = validatorService.isDocumentExists(database, collection, documentData);
                 if (!validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
                 }
                 kafkaService.broadCast(TopicType.Delete_Document_ById, new DeleteDocumentByIdEvent(request));
+                if (redisCachingService.isCached(id)) {
+                    redisCachingService.deleteCachedValue(id);
+                }
                 return ResponseEntity.ok("Document has been deleted successfully!");
             });
-            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
-            logger.info("Document deletion by id response -> " + responseEntity.getBody());
-            return responseEntity;
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
+
+    // todo: Caching here must be done
     @PostMapping("/update")
     public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) {
         JsonNode document = request.getUpdateRequest();
@@ -157,7 +165,8 @@ public class DocumentController {
         JsonNode documentData = document.get("data");
         String id = documentInfo.get("id").asText();
         try {
-            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database, collection, id, 10, 5, () -> {
+            LockExecutionResult<?> result = distributedLocker.documentWriteLock(database,
+                    collection, id, 10, 5, () -> {
                 ValidatorResponse validatorResponse = validatorService
                         .isDocumentUpdateRequestValid(database, collection, documentData, documentInfo);
                 if (!validatorResponse.isValid()) {
@@ -166,9 +175,7 @@ public class DocumentController {
                 kafkaService.broadCast(TopicType.Update_Document, new UpdateDocumentEvent(request));
                 return ResponseEntity.ok("Document has been updated successfully!");
             });
-            ResponseEntity<String> responseEntity = (ResponseEntity<String>) result.resultIfLockAcquired;
-            logger.info("Document Update by id response -> " + responseEntity.getBody());
-            return responseEntity;
+            return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }

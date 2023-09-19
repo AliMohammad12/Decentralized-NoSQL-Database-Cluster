@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
+
+
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.Callable;
@@ -34,11 +36,10 @@ public class DistributedLocker {
         this.kafkaService = kafkaService;
     }
     /* 
-        Implement rate limiter for BruteForce attacks..
-        Make one read lock!
+        Implementing rate limiter for BruteForce attacks, can help here
 
         Whenever you need to lock anything in that tree you go down from the root and acquire a
-        read-lock on everything except the target node itself. The target node gets a write lock.
+        read-lock on everything except the target node itself. The target node gets write lock.
      */
 
 
@@ -105,15 +106,14 @@ public class DistributedLocker {
                                                 final int maximumWaitingTimeToAcquireLock,
                                                 final int lockTimeoutSeconds,
                                                 final Callable<T> task) throws Exception {
-        return readLock(DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+        return readLock( DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
     }
     public <T> LockExecutionResult<T> databaseWriteLock(final String dbName,
                                                        final int maximumWaitingTimeToAcquireLock,
                                                        final int lockTimeoutSeconds,
                                                        final Callable<T> task) throws Exception {
-        return writeLock(DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
+        return writeLock(  DB_PREFIX + dbName, maximumWaitingTimeToAcquireLock, lockTimeoutSeconds, task);
     }
-
 
 
     public <T> LockExecutionResult<T> collectionReadLock(final String dbName, final String collectionName,
@@ -248,7 +248,7 @@ public class DistributedLocker {
             }
         }
         LOG.info("Successfully acquired '{}' lock for key '{}'", "ReadLock", lockKey);
-        long activeReadOps = (long)valueOps.increment(lockKey + ":counter", 1);
+        long activeReadOps = valueOps.increment(lockKey + ":counter", 1);
         LOG.info("Active read operations: '{}' for '{}' lock", (activeReadOps), (lockKey));
         kafkaService.broadCast(TopicType.Share_locking, new ShareLockEvent(lockKey, "ReadLock", lockTimeoutSeconds));
         sleep(200);

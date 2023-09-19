@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -86,27 +87,31 @@ public class JsonServiceImpl implements JsonService {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // Enables pretty-printing
         return objectMapper.writeValueAsString(jsonNode);
     }
-    @Override // use disk operations here
-    public ArrayNode readJsonArray(String path) {
+
+    // todo: locking + caching must be done here
+    @Override
+    public ArrayNode readJsonArray(String path) throws IOException {
+        List<String> documentIds = DiskOperations.readDirectory(path.toString());
+        return readAsJsonArray(documentIds, Path.of(path));
+    }
+    // todo: locking + caching must be done here
+    @Override
+    public ArrayNode readAsJsonArray(List<String> documentsId, Path path) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode documentsArray = objectMapper.createArrayNode();
-
-        File directory = new File(path);
-        File[] documentFiles = directory.listFiles();
-
-        if (documentFiles != null) {
-            for (File documentFile : documentFiles) {
-                if (documentFile.isFile() && documentFile.getName().endsWith(".json")) {
-                    try {
-                        JsonNode documentNode = objectMapper.readTree(documentFile);
-                        documentsArray.add(documentNode);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+        for (String id : documentsId) {
+            if (!id.endsWith(".json")) {
+                id += ".json";
             }
+            documentsArray.add(readJsonNode(path.resolve(id).toString()));
         }
         return documentsArray;
+    }
+    @Override
+    public JsonNode readJsonNode(String path) throws IOException {
+        String jsonContent = DiskOperations.readFile(path);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readTree(jsonContent);
     }
     @Override // use disk operations here
     public User findByUsername(String username) throws IOException {
@@ -143,12 +148,5 @@ public class JsonServiceImpl implements JsonService {
         String property = indexObject.getProperty();
         JsonNode jsonNode = schema.getSchemaNode().get("properties").get(property).get("type");
         return jsonNode.asText();
-    }
-
-    @Override
-    public JsonNode readJsonNode(String path) throws IOException {
-        String jsonContent = DiskOperations.readFile(path);
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readTree(jsonContent);
     }
 }

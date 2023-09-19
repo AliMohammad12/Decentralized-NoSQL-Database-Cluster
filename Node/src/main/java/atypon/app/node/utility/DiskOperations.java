@@ -39,7 +39,6 @@ public class DiskOperations {
         Path path = Paths.get(filePath);
         return new String(Files.readAllBytes(path));
     }
-
     public static boolean isDirectoryExists(String directory) {
         File file = new File(directory);
         return file.isDirectory() && file.exists();
@@ -62,6 +61,17 @@ public class DiskOperations {
             }
         }
         return directoriesList;
+    }
+    public static List<String> readDirectory(String path) {
+        List<String> fileNames = new ArrayList<>();
+        File directory = new File(path);
+        File[] files = directory.listFiles();
+        for (File file : files) {
+            if (file.isFile()) {
+                fileNames.add(file.getName());
+            }
+        }
+        return fileNames;
     }
     public static void deleteFile(String filePath) throws IOException {
         Files.delete(Paths.get(filePath));

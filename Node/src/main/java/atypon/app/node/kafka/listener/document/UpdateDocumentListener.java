@@ -35,7 +35,6 @@ public class UpdateDocumentListener implements EventListener {
 
         JsonNode updateRequest = request.getUpdateRequest();
         String id = updateRequest.get("info").get("id").asText();
-        System.out.println("Document update topic: " + id);
         distributedLocker.releaseWriteLock(DOCUMENT_PREFIX + id);
 
     }

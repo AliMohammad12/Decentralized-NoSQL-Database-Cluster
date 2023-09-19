@@ -39,7 +39,6 @@ public class DeleteDocumentByIdListener implements EventListener {
 
 
         String id = documentData.get("id").asText();
-        System.out.println("Document delete by id topic: " + id);
         // release
         distributedLocker.releaseWriteLock(DOCUMENT_PREFIX + id);
     }

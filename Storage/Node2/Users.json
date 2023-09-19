@@ -1,7 +1,4 @@
 [ {
-  "username" : "client",
-  "password" : "client"
-}, {
-  "username" : "User",
-  "password" : "User"
+  "username" : "admin",
+  "password" : "admin"
 } ]

@@ -148,8 +148,6 @@ public class ClusterDocumentService {
         documentNode.put("property", propertyNode);
         documentNode.put("nodeNameIndexingUpdate", Node.getName());
 
-        System.out.println(documentNode.toPrettyString());
-
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, documentNode.toString(), "document/delete-property");
         HttpHeaders headers = new HttpHeaders();

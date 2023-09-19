@@ -12,7 +12,7 @@ public interface CollectionService {
     void createCollection(CollectionSchema collectionSchema) throws JsonProcessingException;
     void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName);
     void deleteCollection(Collection collection) throws IOException;
-    ArrayNode readCollection(Collection collection);
+    ArrayNode readCollection(Collection collection) throws IOException;
     JsonNode readCollectionFields(Collection collection) throws IOException;
 }
 
