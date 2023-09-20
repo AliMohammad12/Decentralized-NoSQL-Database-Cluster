@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Bank Registration</title>
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <style>
+        body {
+            font-family: "Lato", sans-serif;
+        }
+        .main-head{
+            height: 150px;
+            background: #FFF;
+
+        }
+        .sidenav {
+            height: 100%;
+            background-color: #000;
+            overflow-x: hidden;
+            padding-top: 20px;
+        }
+        .main {
+            padding: 0px 10px;
+        }
+        @media screen and (max-height: 450px) {
+            .sidenav {padding-top: 15px;}
+        }
+        @media screen and (max-width: 450px) {
+            .login-form{
+                margin-top: 10%;
+            }
+            .register-form{
+                margin-top: 10%;
+            }
+        }
+        @media screen and (min-width: 768px){
+            .main{
+                margin-left: 40%;
+            }
+            .sidenav{
+                width: 40%;
+                position: fixed;
+                z-index: 1;
+                top: 0;
+                left: 0;
+            }
+
+            .login-form{
+                margin-top: 80%;
+            }
+
+            .register-form{
+                margin-top: 20%;
+            }
+        }
+        .login-main-text{
+            margin-top: 20%;
+            padding: 60px;
+            color: #fff;
+        }
+        .login-main-text h2{
+            font-weight: 300;
+        }
+        .btn-black{
+            background-color: #000 !important;
+            color: #fff;
+        }
+        #sidebar-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidenav">
+  <div class="login-main-text">
+    <h2>Bank Application<br> Registration Page</h2>
+    <p>Register for a bank account.</p>
+  </div>
+  <img id="sidebar-image" src="https://images.unsplash.com/photo-1525342631975-cfc922fe0b05?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1885&q=80" alt="Image Alt Text">
+</div>
+
+<div class="main">
+  <div class="col-md-6 col-sm-12">
+    <div class="login-form" style="margin-top: 10%;">
+      <div th:if="${message}" th:text="${message}" class="alert alert-info"></div>
+
+      <form th:action="@{/register}" method="post">
+        <div class="form-group">
+          <label for="username">User Name</label>
+          <input type="text" class="form-control" id="username" name="username" placeholder="User Name" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <label for="repeatPassword">Repeat Password</label>
+          <input type="password" class="form-control" id="repeatPassword" name="repeatPassword" placeholder="Repeat Password" required>
+        </div>
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input type="number" class="form-control" id="age" name="age" placeholder="Age" required>
+        </div>
+        <div class="form-group">
+          <label for="accountType">Account Type</label>
+          <select class="form-control" id="accountType" name="accountType" required>
+            <option value="savings">Savings Account</option>
+            <option value="business">Business Account</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-black">Register</button>
+        <a th:href="@{/login}" class="btn btn-secondary">Login</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+</body>
+</html>

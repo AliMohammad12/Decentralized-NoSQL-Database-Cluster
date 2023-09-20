@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration {
+public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -45,14 +45,12 @@ class SecurityConfiguration {
                         authorizeRequests
                                 .requestMatchers("/register/**").permitAll()
                                 .anyRequest().authenticated()
-                )
-                .formLogin(form ->
+                ).formLogin(form ->
                         form.loginPage("/admin/login")
                                 .loginProcessingUrl("/admin/auth")
                                 .successHandler(successHandler())
                                 .permitAll()
-                )                
-                .httpBasic(Customizer.withDefaults());
+                ).httpBasic(Customizer.withDefaults());
         http.csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }

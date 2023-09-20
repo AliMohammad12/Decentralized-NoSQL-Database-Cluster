@@ -4,6 +4,7 @@ import atypon.cluster.client.models.*;
 import atypon.cluster.client.exception.ClusterOperationalIssueException;
 import atypon.cluster.client.exception.CollectionReadException;
 import atypon.cluster.client.request.WriteRequest;
+import atypon.cluster.client.testmodels.NewC;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,18 +26,16 @@ import java.lang.reflect.Field;
 @Component
 @DependsOn("clusterDatabaseService")
 public class ClusterCollectionService {
-    private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClusterCollectionService.class);
     private final RestTemplate restTemplate;
     @Autowired
     public ClusterCollectionService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
-
     // todo: make choosing a name for the collection optional !!!
     @PostConstruct
     private void init() {
-       // createCollection(Employee.class);
+       // createCollection(NewC.class);
        // System.out.println(readCollection(NewC.class).toPrettyString());
     }
     public void createCollection(Class<?> collectionClass) {
@@ -49,8 +48,10 @@ public class ClusterCollectionService {
 
         Field[] fieldsArray = collectionClass.getDeclaredFields();
         ObjectNode fields = objectMapper.createObjectNode();
+
         for (Field field : fieldsArray) {
             String fieldName = field.getName();
+            if (fieldName.equals("id")) continue;
             Class<?> fieldType = field.getType();
             Object dummyValue = createDummyValue(fieldType);
             fields.putPOJO(fieldName, dummyValue);

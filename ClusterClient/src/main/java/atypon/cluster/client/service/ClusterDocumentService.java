@@ -26,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 @DependsOn("clusterDatabaseService")
 public class ClusterDocumentService {
-    private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ClusterDocumentService.class);
     private final RestTemplate restTemplate;
     @Value("${cluster.database}")
     private String databaseName;
@@ -37,7 +37,7 @@ public class ClusterDocumentService {
 
     @PostConstruct
     public void init() throws JsonProcessingException, DocumentReadingException {
-        // createDocument(NewC.class, new NewC("OhMama", 23, 1200, true));
+//        createDocument(NewC.class, new NewC("OhMama", 23, 1200, true));
 //        createDocument(NewC.class, new NewC("Ahmad", 20, 1200, false));
 //        createDocument(NewC.class, new NewC("Mumen", 21, 1500, true));
 //        createDocument(NewC.class, new NewC("ABCCC", 21, 1200, false));
@@ -50,7 +50,7 @@ public class ClusterDocumentService {
 //                new Property("age", 25),
 //                new Property("salary", 1500.20));
 
-        // readDocumentByProperty(NewC.class, new Property("age", 20));
+        //System.out.println(readDocumentByProperty(NewC.class, new Property("age", 20)).toPrettyString());
     }
     public <T> String createDocument(Class<?> collection, T document) throws JsonProcessingException {
         String collectionName = collection.getSimpleName();
@@ -58,18 +58,19 @@ public class ClusterDocumentService {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode objectNode = objectMapper.createObjectNode();
 
-        System.out.println(Node.getName());
+        String docString = objectMapper.writeValueAsString(document);
+        ObjectNode modifiedDocument = (ObjectNode) objectMapper.readTree(docString);
+        if (modifiedDocument.has("id")) {
+            modifiedDocument.remove("id");
+        }
+
         ObjectNode documentNode = objectMapper.createObjectNode();
         documentNode.put("CollectionName", collectionName);
         documentNode.put("DatabaseName", databaseName);
         documentNode.put("NodeName", Node.getName());
-        String documentString = objectMapper.writeValueAsString(document);
+        String documentString = objectMapper.writeValueAsString(modifiedDocument);
         documentNode.put("data", objectMapper.readTree(documentString));
         objectNode.put("documentNode", documentNode);
-
-
-        System.out.println(objectNode.toPrettyString());
-
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, objectNode.toString(), "document/create");

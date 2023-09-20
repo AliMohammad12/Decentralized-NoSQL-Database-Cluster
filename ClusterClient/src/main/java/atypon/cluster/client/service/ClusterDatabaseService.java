@@ -35,6 +35,7 @@ public class ClusterDatabaseService {
     }
     @PostConstruct
     private void init() throws InterruptedException {
+        createDatabase();
 //        for (int j = 0; j < 10; j++) {
 //            ExecutorService executor = Executors.newFixedThreadPool(1);
 //            for (int i = 0; i < 1; i++) {

@@ -159,7 +159,6 @@ public class CollectionServiceImpl implements CollectionService {
         while (fieldsIterator.hasNext()) {
             Map.Entry<String, JsonNode> fieldEntry = fieldsIterator.next();
             String fieldName = fieldEntry.getKey();
-
             IndexObject indexObject = new IndexObject(user.getUsername(), collection.getDatabase().getName(),
                     collection.getName(), fieldName);
             if (indexingService.isIndexed(indexObject)) {
@@ -189,6 +188,12 @@ public class CollectionServiceImpl implements CollectionService {
         }
         if (redisCachingService.isCached(fieldsCacheKey)) {
             redisCachingService.deleteCachedValue(fieldsCacheKey);
+        }
+        if (redisCachingService.isCached(database)) {
+            List<String> dbCollections = (List<String>) redisCachingService.getCachedValue(database);
+            redisCachingService.deleteCachedValue(database);
+            dbCollections.remove(collection.getName());
+            redisCachingService.cache(database, dbCollections, 120);
         }
         logger.info("Successfully deleted the collection '" + collection.getName() +"' within '" +
                 collection.getDatabase().getName() + "' database!");
