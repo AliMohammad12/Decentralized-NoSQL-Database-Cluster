@@ -7,7 +7,7 @@ import atypon.app.node.kafka.event.database.DeleteDatabaseEvent;
 import atypon.app.node.kafka.event.database.UpdateDatabaseEvent;
 import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.locking.LockExecutionResult;
-import atypon.app.node.locking.RedisCachingService;
+import atypon.app.node.caching.RedisCachingService;
 import atypon.app.node.model.Database;
 import atypon.app.node.request.database.DatabaseRequest;
 import atypon.app.node.request.database.DatabaseUpdateRequest;
@@ -67,6 +67,11 @@ public class DatabaseController {
     }
     @RequestMapping("/read/database")
     public ResponseEntity<?> readDatabase(@RequestBody Database database) {
+        if (redisCachingService.isCached(database.getName())) {
+            Object cachedValue = redisCachingService.getCachedValue(database.getName());
+            redisCachingService.cache(database.getName(), cachedValue, 120);
+            return ResponseEntity.ok(cachedValue);
+        }
         try {
             LockExecutionResult<?> result = distributedLocker.databaseReadLock(database.getName(), 10, 5, () -> {
                 ValidatorResponse validatorResponse = validatorService.isDatabaseExists(database.getName());

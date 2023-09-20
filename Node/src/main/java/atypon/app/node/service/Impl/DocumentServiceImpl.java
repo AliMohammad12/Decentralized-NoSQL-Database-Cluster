@@ -1,5 +1,6 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.caching.RedisCachingService;
 import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.indexing.Property;
 import atypon.app.node.locking.DistributedLocker;
@@ -36,14 +37,14 @@ public class DocumentServiceImpl implements DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
     private final JsonService jsonService;
     private final IndexingService indexingService;
-    private final DistributedLocker distributedLocker;
+    private final RedisCachingService redisCachingService;
     @Autowired
-    public DocumentServiceImpl(JsonService jsonService
-                               , IndexingService indexingService,
-                               DistributedLocker distributedLocker) {
+    public DocumentServiceImpl(JsonService jsonService,
+                               IndexingService indexingService,
+                               RedisCachingService redisCachingService) {
         this.jsonService = jsonService;
         this.indexingService = indexingService;
-        this.distributedLocker = distributedLocker;
+        this.redisCachingService = redisCachingService;
     }
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -63,10 +64,10 @@ public class DocumentServiceImpl implements DocumentService {
         String jsonString = jsonService.convertJsonToString(document);
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName).resolve("Documents");
         DiskOperations.writeToFile(jsonString, path.toString(), document.get("id").asText() + ".json");
-
         if (nodeNameIndexingUpdate.equals(Node.getName())) {
             indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
         }
+        redisCachingService.cache(document.get("id").asText() , document, 60);
         logger.info("Successfully created the document: \n" + document.toPrettyString());
     }
 
@@ -90,10 +91,11 @@ public class DocumentServiceImpl implements DocumentService {
         ArrayNode documentsArray = objectMapper.createArrayNode();
         IndexObject indexObject = new IndexObject(user.getUsername(), databaseName, collectionName, property.getName());
         if (indexingService.isIndexed(indexObject)) {
-            List<String> documentsId =  indexingService.retrieveByProperty(databaseName, collectionName, property);
-            documentsArray = jsonService.readAsJsonArray(documentsId, path); // do locking on readAsJsonArray
+            List<String> documentsId = indexingService.retrieveByProperty(databaseName, collectionName, property);
+            documentsArray = jsonService.readAsJsonArray(documentsId, path);
         } else {
-            ArrayNode arrayNode = jsonService.readJsonArray(path.toString());  // do locking here too
+            ArrayNode arrayNode = jsonService.readJsonArray(path.toString());
+
             for (JsonNode element : arrayNode) {
                 JsonNode propertyNode = element.get(property.getName());
                 if (propertyNode.isBoolean() && property.isBooleanValue()) {
@@ -125,6 +127,7 @@ public class DocumentServiceImpl implements DocumentService {
     public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Deleting documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
+
         String collectionName = request.getCollection();
         String databaseName = request.getDatabase();
         Property property = request.getProperty();
@@ -175,9 +178,8 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         for (String id : documentsId) {
-            // delete here!
-            // Either from disk or from cache + consider locking
              DiskOperations.deleteFile(path.resolve(id+".json").toString());
+             redisCachingService.deleteCachedValue(id);
         }
     }
     @Override // DONE + Tested
@@ -191,7 +193,10 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(collection)
                 .resolve("Documents")
                 .resolve(id + ".json");
-        return jsonService.readJsonNode(path.toString());
+
+        JsonNode result = jsonService.readJsonNode(path.toString());
+        redisCachingService.cache(id, result, 60);
+        return result;
     }
     @Override // Done + Tested
     public void deleteDocumentById(String database, String collection, JsonNode document) throws IOException {
@@ -204,6 +209,10 @@ public class DocumentServiceImpl implements DocumentService {
                 .resolve(collection)
                 .resolve("Documents")
                 .resolve(id + ".json");
+
+        if (redisCachingService.isCached(id)) {
+            redisCachingService.deleteCachedValue(id);
+        }
         DiskOperations.deleteFile(path.toString());
     }
     @Override // working
@@ -212,14 +221,18 @@ public class DocumentServiceImpl implements DocumentService {
         String collection = updateRequest.get("CollectionName").asText();
         String database = updateRequest.get("DatabaseName").asText();
         JsonNode documentInfo = updateRequest.get("info");
-        JsonNode documentBeforeUpdate = readDocumentById(database, collection, documentInfo);
-
+        String id = documentInfo.get("id").asText();
+        JsonNode documentBeforeUpdate;
+        if (redisCachingService.isCached(id)) {
+            documentBeforeUpdate = (JsonNode) redisCachingService.getCachedValue(id);
+        } else {
+            documentBeforeUpdate = readDocumentById(database, collection, documentInfo);
+        }
         int versionNumber = documentBeforeUpdate.get("version").asInt();
         int requestVersionNumber = documentInfo.get("version").asInt();
         if (versionNumber == requestVersionNumber) {
             // - check for each property if it's indexed, if it's indexed we need to fix our bPlusTree
             JsonNode documentData = updateRequest.get("data");
-            String id = documentInfo.get("id").asText();
             String nodeNameIndexingUpdate = documentInfo.get("NodeName").asText();
             logger.info("Updating the document with id '" + id + "' !");
             Iterator<Map.Entry<String, JsonNode>> fieldsIterator = documentData.fields();
@@ -249,6 +262,7 @@ public class DocumentServiceImpl implements DocumentService {
                     .resolve(collection)
                     .resolve("Documents");
 
+            redisCachingService.cache(id, documentBeforeUpdate, 60);
             String jsonString = jsonService.convertJsonToString(documentBeforeUpdate);
             DiskOperations.writeToFile(jsonString, path.toString(), id + ".json");
         } else {

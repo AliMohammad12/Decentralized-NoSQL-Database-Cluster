@@ -1,6 +1,8 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.caching.RedisCachingService;
 import atypon.app.node.indexing.IndexObject;
+import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.model.Node;
 import atypon.app.node.model.User;
 import atypon.app.node.service.services.JsonService;
@@ -28,6 +30,10 @@ import java.util.Map;
 
 @Service
 public class JsonServiceImpl implements JsonService {
+    private final RedisCachingService redisCachingService;
+    public JsonServiceImpl(RedisCachingService redisCachingService) {
+        this.redisCachingService = redisCachingService;
+    }
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -87,14 +93,11 @@ public class JsonServiceImpl implements JsonService {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);  // Enables pretty-printing
         return objectMapper.writeValueAsString(jsonNode);
     }
-
-    // todo: locking + caching must be done here
     @Override
     public ArrayNode readJsonArray(String path) throws IOException {
         List<String> documentIds = DiskOperations.readDirectory(path.toString());
         return readAsJsonArray(documentIds, Path.of(path));
     }
-    // todo: locking + caching must be done here
     @Override
     public ArrayNode readAsJsonArray(List<String> documentsId, Path path) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -103,10 +106,18 @@ public class JsonServiceImpl implements JsonService {
             if (!id.endsWith(".json")) {
                 id += ".json";
             }
-            documentsArray.add(readJsonNode(path.resolve(id).toString()));
+            if (redisCachingService.isCached(id)) {
+                JsonNode result = (JsonNode) redisCachingService.getCachedValue(id);
+                documentsArray.add(result);
+                redisCachingService.cache(id, result, 60);
+            } else {
+                documentsArray.add(readJsonNode(path.resolve(id).toString()));
+            }
         }
         return documentsArray;
     }
+
+
     @Override
     public JsonNode readJsonNode(String path) throws IOException {
         String jsonContent = DiskOperations.readFile(path);

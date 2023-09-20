@@ -7,7 +7,7 @@ import atypon.app.node.kafka.event.collection.DeleteCollectionEvent;
 import atypon.app.node.kafka.event.collection.UpdateCollectionEvent;
 import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.locking.LockExecutionResult;
-import atypon.app.node.locking.RedisCachingService;
+import atypon.app.node.caching.RedisCachingService;
 import atypon.app.node.model.Collection;
 import atypon.app.node.model.Database;
 import atypon.app.node.request.collection.CollectionRequest;
@@ -17,10 +17,14 @@ import atypon.app.node.response.ValidatorResponse;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
 import atypon.app.node.service.services.ValidatorService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/collection")
@@ -67,7 +71,7 @@ public class CollectionController {
         String collectionCacheKey = database.getName()+"/"+collection.getName();
         if (redisCachingService.isCached(collectionCacheKey)) {
             Object cachedValue = redisCachingService.getCachedValue(collectionCacheKey);
-            redisCachingService.cache(collectionCacheKey, cachedValue, 30);
+            redisCachingService.cache(collectionCacheKey, cachedValue, 90);
             return ResponseEntity.ok(cachedValue);
         }
         try {
@@ -78,9 +82,7 @@ public class CollectionController {
                 }
                 return ResponseEntity.ok(collectionService.readCollection(collection));
             });
-            ResponseEntity<?> responseEntity = (ResponseEntity<?>)result.resultIfLockAcquired;
-            redisCachingService.cache(collectionCacheKey, responseEntity.getBody(), 30);
-            return responseEntity;
+            return (ResponseEntity<?>)result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
@@ -91,7 +93,7 @@ public class CollectionController {
         String fieldsCacheKey = database.getName() +"/fields/"+collection.getName();
         if (redisCachingService.isCached(fieldsCacheKey)) {
             Object cachedValue = redisCachingService.getCachedValue(fieldsCacheKey);
-            redisCachingService.cache(fieldsCacheKey, cachedValue, 30);
+            redisCachingService.cache(fieldsCacheKey, cachedValue, 90);
             return ResponseEntity.ok(cachedValue);
         }
         try {
@@ -102,9 +104,7 @@ public class CollectionController {
                 }
                 return ResponseEntity.ok(collectionService.readCollectionFields(collection));
             });
-            ResponseEntity<?> responseEntity = (ResponseEntity<?>)result.resultIfLockAcquired;
-            redisCachingService.cache(fieldsCacheKey, responseEntity.getBody(), 30);
-            return responseEntity;
+            return (ResponseEntity<?>)result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
@@ -140,19 +140,11 @@ public class CollectionController {
             LockExecutionResult<?> result = distributedLocker.collectionWriteLock(databaseName, collection.getName(), 10, 5, () -> {
                 ValidatorResponse collectionValidator = validatorService.isCollectionExists(databaseName, collection.getName());
                 if (!collectionValidator.isValid()) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(collectionValidator.getMessage());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(collectionValidator.getMessage());
                 }
                 kafkaService.broadCast(TopicType.Delete_Collection, new DeleteCollectionEvent(request));
                 return ResponseEntity.ok("Collection has been deleted successfully!");
             });
-            String collectionCacheKey = databaseName + "/" + collection.getName();
-            if (redisCachingService.isCached(collectionCacheKey)) {
-                redisCachingService.deleteCachedValue(collectionCacheKey);
-            }
-            String fieldsCacheKey = databaseName + "/fields/" + collection.getName();
-            if (redisCachingService.isCached(fieldsCacheKey)) {
-                redisCachingService.deleteCachedValue(fieldsCacheKey);
-            }
             return (ResponseEntity<String>) result.resultIfLockAcquired;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");

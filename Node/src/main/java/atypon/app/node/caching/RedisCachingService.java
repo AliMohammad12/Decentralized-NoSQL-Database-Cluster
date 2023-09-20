@@ -1,4 +1,4 @@
-package atypon.app.node.locking;
+package atypon.app.node.caching;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

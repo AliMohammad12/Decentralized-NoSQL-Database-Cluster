@@ -1,7 +1,9 @@
 package atypon.app.node.service.Impl;
 
+import atypon.app.node.caching.RedisCachingService;
 import atypon.app.node.indexing.IndexObject;
 import atypon.app.node.model.Collection;
+import atypon.app.node.model.Database;
 import atypon.app.node.model.Node;
 import atypon.app.node.schema.CollectionSchema;
 import atypon.app.node.service.services.CollectionService;
@@ -16,6 +18,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,11 +35,14 @@ public class CollectionServiceImpl implements CollectionService {
     private static final Logger logger = LoggerFactory.getLogger(CollectionService.class);
     private final JsonService jsonService;
     private final IndexingService indexingService;
+    private final RedisCachingService redisCachingService;
     @Autowired
     public CollectionServiceImpl(JsonService jsonService,
-                                 IndexingService indexingService) {
+                                 IndexingService indexingService,
+                                 RedisCachingService redisCachingService) {
         this.jsonService = jsonService;
         this.indexingService = indexingService;
+        this.redisCachingService = redisCachingService;
     }
     private static Path getPath() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -58,6 +65,13 @@ public class CollectionServiceImpl implements CollectionService {
         DiskOperations.createDirectory(path.toString(), collection.getName());
         DiskOperations.createDirectory(path.resolve(collection.getName()).toString(), "Documents");
         DiskOperations.writeToFile(schemaJsonString, path.resolve(collection.getName()).toString(), "schema.json");
+
+        if (redisCachingService.isCached(databaseName)) {
+            List<String> dbCache = (List<String>) redisCachingService.getCachedValue(databaseName);
+            redisCachingService.deleteCachedValue(databaseName);
+            dbCache.add(collection.getName());
+            redisCachingService.cache(databaseName, dbCache, 90);
+        }
         logger.info("Successfully created collection schema '" + collection.getName() + "' within '" +
                 databaseName + "' database!, schema: \n" + schemaJsonString);
     }
@@ -69,7 +83,12 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve("Collections").
                 resolve(collection.getName()).
                 resolve("Documents");
-        return jsonService.readJsonArray(path.toString());
+
+        Database database = collection.getDatabase();
+        String collectionCacheKey = database.getName()+"/"+collection.getName();
+        ArrayNode result = jsonService.readJsonArray(path.toString());
+        redisCachingService.cache(collectionCacheKey, result, 90);
+        return result;
     }
     @Override
     public JsonNode readCollectionFields(Collection collection) throws IOException {
@@ -90,6 +109,9 @@ public class CollectionServiceImpl implements CollectionService {
 
             fields.put(fieldName, fieldType);
         }
+
+        String fieldsCacheKey = database +"/fields/"+collection.getName();
+        redisCachingService.cache(fieldsCacheKey, fields, 90);
         return fields;
     }
     // todo: indexing file content should change too + tree!
@@ -100,17 +122,35 @@ public class CollectionServiceImpl implements CollectionService {
                 resolve("Collections");
         DiskOperations.updateDirectoryName(path.toString(), oldCollectionName, newCollectionName);
 
+        String collectionCacheKey = databaseName + "/" + oldCollectionName;
+        if (redisCachingService.isCached(collectionCacheKey)) {
+            redisCachingService.deleteCachedValue(collectionCacheKey);
+        }
+        String fieldsCacheKey = databaseName + "/fields/" + oldCollectionName;
+        if (redisCachingService.isCached(fieldsCacheKey)) {
+            redisCachingService.deleteCachedValue(fieldsCacheKey);
+        }
+
         logger.info("Successfully updated the name of '" + oldCollectionName
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
-    // todo: must clear the B+ Tree (Don't forget)
+
     @Override
     public void deleteCollection(Collection collection) throws IOException {
         Path path = getPath().
                 resolve(collection.getDatabase().getName()).
                 resolve("Collections").
                 resolve(collection.getName());
-        JsonNode jsonNode = readCollectionFields(collection);
+
+        String database = collection.getDatabase().getName();
+        String fieldsCacheKey = database + "/fields/" + collection.getName();
+
+        JsonNode jsonNode;
+        if (redisCachingService.isCached(fieldsCacheKey)) {
+            jsonNode = (JsonNode) redisCachingService.getCachedValue(fieldsCacheKey);
+        } else {
+            jsonNode = readCollectionFields(collection);
+        }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails user = (UserDetails) authentication.getPrincipal();
@@ -127,7 +167,29 @@ public class CollectionServiceImpl implements CollectionService {
             }
         }
 
+        String collectionCacheKey = database + "/" + collection.getName();
+        ArrayNode documentNodes;
+        if (redisCachingService.isCached(collectionCacheKey)) {
+            documentNodes = (ArrayNode) redisCachingService.getCachedValue(collectionCacheKey);
+        } else {
+            documentNodes = readCollection(collection);
+        }
+
+        for (JsonNode document : documentNodes) {
+            String id = document.get("id").asText();
+            logger.info("deleting id {}, from collection {}", id, collection.getName());
+            if (redisCachingService.isCached(id)) {
+                redisCachingService.deleteCachedValue(id);
+            }
+        }
         DiskOperations.deleteDirectory(path.toString());
+
+        if (redisCachingService.isCached(collectionCacheKey)) {
+            redisCachingService.deleteCachedValue(collectionCacheKey);
+        }
+        if (redisCachingService.isCached(fieldsCacheKey)) {
+            redisCachingService.deleteCachedValue(fieldsCacheKey);
+        }
         logger.info("Successfully deleted the collection '" + collection.getName() +"' within '" +
                 collection.getDatabase().getName() + "' database!");
     }

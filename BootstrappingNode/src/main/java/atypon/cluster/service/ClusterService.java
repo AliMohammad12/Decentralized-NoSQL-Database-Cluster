@@ -55,12 +55,12 @@ public class ClusterService {
                     continue;
                 }
                 String[] parts = line.trim().split("\\s+");
-                if (parts.length >= 4) {
+                if (parts.length >= 3) {
                     String containerName = parts[0];
                     String cmd = parts[1]+ "  " + parts[2] + "  " + parts[3];
-                    String state = parts[4];
-                    String ports = parts[5];
-                    containerStatuses.put(containerName, new String[]{cmd, state, ports});
+//                    String state = parts[4];
+//                    String ports = parts[5];
+                    containerStatuses.put(containerName, new String[]{cmd, "NotYet", "port"});
                 }
             }
             process.waitFor();
