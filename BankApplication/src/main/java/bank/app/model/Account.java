@@ -11,8 +11,8 @@ public class Account {
     private String id;
     private String username;
     private String password;
-    private Role role;
-    public Account(String username, String password, Role role) {
+    private String role;
+    public Account(String username, String password, String role) {
         this.username = username;
         this.password = password;
         this.role = role;

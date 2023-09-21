@@ -21,8 +21,7 @@ public class IndexingController {
     }
     @PostMapping("/create")
     public String createIndexing(@RequestParam("fieldName") String property,
-                                 @SessionAttribute("collectionData") CollectionData collectionData,
-                                 Model model) {
+                                 @SessionAttribute("collectionData") CollectionData collectionData) {
         IndexObject indexObject = new IndexObject(UserInfo.getUsername(),
                 collectionData.getDatabaseName(), collectionData.getCollectionName(),
                 property);
@@ -31,8 +30,7 @@ public class IndexingController {
     }
     @PostMapping("/delete")
     public String deleteIndexing(@RequestParam("fieldName") String property,
-                                 @SessionAttribute("collectionData") CollectionData collectionData,
-                                 Model model) {
+                                 @SessionAttribute("collectionData") CollectionData collectionData) {
         IndexObject indexObject = new IndexObject(UserInfo.getUsername(),
                 collectionData.getDatabaseName(), collectionData.getCollectionName(),
                 property);

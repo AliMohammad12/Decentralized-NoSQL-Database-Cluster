@@ -43,11 +43,10 @@ public class RegisterController {
         }
         Account account = accountService.readAccountByUsername(username);
         if (account != null) {
-            redirectAttributes.addFlashAttribute("message",
-                    "Account with username '" + username + "' already exists");
+            redirectAttributes.addFlashAttribute("message", "Account with username '" + username + "' already exists");
             return "redirect:/register";
         }
-        String accountId = accountService.createAccount(new Account(username, password, Role.Customer));
+        String accountId = accountService.createAccount(new Account(username, password, "Customer"));
         Customer customer = new Customer(accountId, username, accountType, 0.0, age);
         customerService.createCustomer(customer);
         redirectAttributes.addFlashAttribute("message", "Your account have been successfully created!");

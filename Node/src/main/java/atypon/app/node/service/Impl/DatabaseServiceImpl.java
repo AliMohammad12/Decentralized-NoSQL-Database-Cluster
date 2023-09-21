@@ -71,8 +71,6 @@ public class DatabaseServiceImpl implements DatabaseService {
         }
         logger.info("Database with the name '" + oldDatabaseName + "' have been successfully updated to '" + newDatabaseName + "' !");
     }
-
-
     @Override
     public void deleteDatabase(Database database) throws IOException {
         List<String> collections;

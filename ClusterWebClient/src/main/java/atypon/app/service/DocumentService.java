@@ -63,7 +63,6 @@ public class DocumentService {
         updateRequest.put("data", data);
         request.put("updateRequest", updateRequest);
 
-        System.out.println(request.toPrettyString());
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, request.toString(), "document/update");
         HttpHeaders headers = new HttpHeaders();

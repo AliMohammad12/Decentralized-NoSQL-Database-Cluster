@@ -2,6 +2,8 @@ package atypon.app.service;
 
 import atypon.app.model.User;
 import atypon.app.model.UserRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +18,14 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class WriteRequestsService {
+    private static final Logger logger = LoggerFactory.getLogger(WriteRequestsService.class);
     private final RestTemplate restTemplate;
     @Autowired
     public WriteRequestsService(@Qualifier("writeRequestsBean") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
     public ResponseEntity<?> sendWriteRequest(Object request, String endpoint, User user) {
+        logger.info("Sending '{}' to '{}' endpoint for user '{}'", request, endpoint, user);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(user.getUsername(), user.getPassword());

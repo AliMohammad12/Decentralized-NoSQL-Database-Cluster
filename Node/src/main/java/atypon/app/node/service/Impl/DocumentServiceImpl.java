@@ -68,6 +68,9 @@ public class DocumentServiceImpl implements DocumentService {
             indexingService.indexDocumentPropertiesIfExists(databaseName, collectionName, document);
         }
         redisCachingService.cache(document.get("id").asText() , document, 60);
+        if (redisCachingService.isCached(databaseName+"/"+collectionName)) {
+            redisCachingService.deleteCachedValue(databaseName+"/"+collectionName);
+        }
         logger.info("Successfully created the document: \n" + document.toPrettyString());
     }
 
@@ -213,6 +216,9 @@ public class DocumentServiceImpl implements DocumentService {
         if (redisCachingService.isCached(id)) {
             redisCachingService.deleteCachedValue(id);
         }
+        if (redisCachingService.isCached(database+"/"+collection)) {
+            redisCachingService.deleteCachedValue(database+"/"+collection);
+        }
         DiskOperations.deleteFile(path.toString());
     }
     @Override // working
@@ -262,7 +268,13 @@ public class DocumentServiceImpl implements DocumentService {
                     .resolve(collection)
                     .resolve("Documents");
 
-            redisCachingService.cache(id, documentBeforeUpdate, 60);
+            if (redisCachingService.isCached(id)) {
+                redisCachingService.deleteCachedValue(id);
+                redisCachingService.cache(id, documentBeforeUpdate, 60);
+            }
+            if (redisCachingService.isCached(database +"/"+collection)) {
+                redisCachingService.deleteCachedValue(database+"/"+collection);
+            }
             String jsonString = jsonService.convertJsonToString(documentBeforeUpdate);
             DiskOperations.writeToFile(jsonString, path.toString(), id + ".json");
         } else {

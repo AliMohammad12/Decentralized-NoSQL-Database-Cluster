@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank Application</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Navbar styles */
+        .navbar-dark {
+            background-color: #000; /* Black background */
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: #fff; /* White text */
+        }
+
+        /* Brighter style for balance text in the navbar */
+        .navbar-text .balance-text {
+            color: #fff; /* White text */
+            font-weight: bold;
+        }
+
+        /* Container for main content */
+        .container {
+            padding-top: 20px;
+        }
+        /* Style for action buttons */
+        .action-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+        }
+
+        /* Style for transaction section */
+        .transaction-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <a class="navbar-brand"th:href="@{/customer/dashboard}">Bank Application</a>
+
+    <li class="nav-item">
+        <button type="button" class="btn btn-link text-white">
+            Welcome <span th:text="${username}"></span>
+        </button>
+    </li>
+    <div class="navbar-collapse collapse">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <button type="button" class="btn btn-link text-white">
+                    Account Type: <span th:text="${accountType}"></span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="btn btn-link text-white">
+                    Balance: <span th:text="${balance}"></span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-link text-white">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+
+
+<div class="container">
+    <div th:if="${message}" th:text="${message}" class="alert alert-info"></div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://st2.depositphotos.com/1177973/6542/i/600/depositphotos_65423841-stock-photo-female-hand-with-money-in.jpg" class="card-img-top" alt="Withdraw">                <div class="card-body">
+                    <h5 class="card-title">Withdraw Money</h5>
+                    <p class="card-text">Click the button below to withdraw money from your account.</p>
+                    <button class="btn btn-primary action-button" data-toggle="modal" data-target="#withdrawModal">Withdraw</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://st2.depositphotos.com/1177973/6537/i/450/depositphotos_65374457-stock-photo-female-hand-with-money-in.jpg" class="card-img-top" alt="Deposit">
+                <div class="card-body">
+                    <h5 class="card-title">Deposit Money</h5>
+                    <p class="card-text">Click the button below to deposit money into your account.</p>
+                    <button class="btn btn-success action-button" data-toggle="modal" data-target="#depositModal">Deposit</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://st4.depositphotos.com/9999814/30077/i/600/depositphotos_300774316-stock-photo-finance-and-money-transaction-technology.jpg" class="card-img-top" alt="Transaction">                <div class="card-body transaction-section">
+                    <h5 class="card-title">Make a Transaction</h5>
+                    <p class="card-text">Click the button below to go to the transaction page.</p>
+                    <a th:href="@{/customer/transaction}" class="btn btn-info action-button">Transaction</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="withdrawModal" tabindex="-1" role="dialog" aria-labelledby="withdrawModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="withdrawModalLabel">Withdraw Money</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="balance-text">Your account balance is: $<span th:text="${balance}">1000.00</span></p>
+                <form th:action="@{/customer/withdraw}" method="post">
+                    <div class="form-group">
+                        <label for="withdrawAmount">Amount to Withdraw</label>
+                        <input type="number" class="form-control" id="withdrawAmount" name="withdrawAmount" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Withdraw</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depositModal" tabindex="-1" role="dialog" aria-labelledby="depositModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="depositModalLabel">Deposit Money</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="balance-text">Your account balance is: $<span th:text="${balance}">1000.00</span></p>
+                <form th:action="@{/customer/deposit}" method="post">
+                    <div class="form-group">
+                        <label for="depositAmount">Amount to Deposit</label>
+                        <input type="number" class="form-control" id="depositAmount" name="depositAmount" step="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Deposit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

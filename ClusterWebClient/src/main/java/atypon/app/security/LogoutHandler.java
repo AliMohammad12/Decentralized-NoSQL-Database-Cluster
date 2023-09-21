@@ -19,16 +19,12 @@ import java.io.IOException;
 
 @Component
 public class LogoutHandler implements LogoutSuccessHandler {
-    private final RestTemplate restTemplate;
     @Autowired
-    public LogoutHandler(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
+    private RestTemplate restTemplate;
     @Override
     public void onLogoutSuccess(HttpServletRequest request,
                                 HttpServletResponse response,
-                                Authentication authentication) throws IOException, ServletException {
+                                Authentication authentication) throws IOException {
         String username = authentication.getName();
         String password = UserInfo.getPassword();
 

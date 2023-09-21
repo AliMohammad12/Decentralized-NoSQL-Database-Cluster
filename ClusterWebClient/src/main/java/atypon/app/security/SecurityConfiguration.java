@@ -14,15 +14,11 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @EnableWebSecurity
 class SecurityConfiguration {
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();
     }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests ->
@@ -46,6 +42,6 @@ class SecurityConfiguration {
     }
     @Bean
     public LogoutHandler logoutSuccessHandler() {
-        return new LogoutHandler(restTemplate());
+        return new LogoutHandler();
     }
 }

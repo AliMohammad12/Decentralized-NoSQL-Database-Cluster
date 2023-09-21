@@ -14,14 +14,14 @@ public class Customer {
     private String accountId;
     private String username;
     private String accountType;
-    private double salary;
+    private double balance;
     private int age;
 
-    public Customer(String accountId, String username, String accountType, double salary, int age) {
+    public Customer(String accountId, String username, String accountType, double balance, int age) {
         this.accountId = accountId;
         this.username = username;
         this.accountType = accountType;
-        this.salary = salary;
+        this.balance = balance;
         this.age = age;
     }
 }

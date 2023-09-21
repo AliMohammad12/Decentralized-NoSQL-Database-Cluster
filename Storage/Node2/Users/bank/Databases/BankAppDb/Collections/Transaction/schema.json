@@ -1,0 +1,20 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "type" : "object",
+  "properties" : {
+    "receiverId" : {
+      "type" : "string"
+    },
+    "senderId" : {
+      "type" : "string"
+    },
+    "amount" : {
+      "type" : "number"
+    },
+    "date" : {
+      "type" : "string"
+    }
+  },
+  "required" : [ "receiverId", "senderId", "amount", "date" ],
+  "additionalProperties" : false
+}

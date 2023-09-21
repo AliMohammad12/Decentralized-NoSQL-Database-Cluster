@@ -1,0 +1,23 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "type" : "object",
+  "properties" : {
+    "accountId" : {
+      "type" : "string"
+    },
+    "username" : {
+      "type" : "string"
+    },
+    "accountType" : {
+      "type" : "string"
+    },
+    "balance" : {
+      "type" : "number"
+    },
+    "age" : {
+      "type" : "integer"
+    }
+  },
+  "required" : [ "accountId", "username", "accountType", "balance", "age" ],
+  "additionalProperties" : false
+}

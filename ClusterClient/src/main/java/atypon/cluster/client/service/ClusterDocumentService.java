@@ -5,10 +5,10 @@ import atypon.cluster.client.exception.*;
 
 import atypon.cluster.client.request.Property;
 import atypon.cluster.client.request.WriteRequest;
-import atypon.cluster.client.testmodels.NewC;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -18,12 +18,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-@Service
+@Component
 @DependsOn("clusterDatabaseService")
 public class ClusterDocumentService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterDocumentService.class);
@@ -37,7 +36,7 @@ public class ClusterDocumentService {
 
     @PostConstruct
     public void init() throws JsonProcessingException, DocumentReadingException {
-//        createDocument(NewC.class, new NewC("OhMama", 23, 1200, true));
+         //createDocument(Account.class, new Account("UUUU", "UUUU", "Admin"));
 //        createDocument(NewC.class, new NewC("Ahmad", 20, 1200, false));
 //        createDocument(NewC.class, new NewC("Mumen", 21, 1500, true));
 //        createDocument(NewC.class, new NewC("ABCCC", 21, 1200, false));
@@ -74,6 +73,7 @@ public class ClusterDocumentService {
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, objectNode.toString(), "document/create");
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
@@ -200,7 +200,6 @@ public class ClusterDocumentService {
         updateRequest.put("data", data);
         request.put("updateRequest", updateRequest);
 
-        System.out.println(request.toPrettyString());
 
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user, request.toString(), "document/update");
@@ -256,7 +255,7 @@ public class ClusterDocumentService {
             throw new ClusterOperationalIssueException();
         }
     }
-    public JsonNode readDocumentByProperty(Class<?> collection, Property property) {
+    public ArrayNode readDocumentByProperty(Class<?> collection, Property property) {
         String collectionName = collection.getSimpleName();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -283,9 +282,9 @@ public class ClusterDocumentService {
         HttpEntity<Object> httpEntity = new HttpEntity<>(documentNode.toString(), headers);
         String url = "http://localhost:"+Node.getPort()+"/document/read-property";
 
-        ResponseEntity<JsonNode> response;
+        ResponseEntity<ArrayNode> response;
         try {
-            response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, JsonNode.class);
+            response = restTemplate.exchange(url, HttpMethod.POST, httpEntity, ArrayNode.class);
             logger.info("Successfully read the documents: \n" + response.getBody().toPrettyString());
             return response.getBody();
         } catch (HttpClientErrorException e) {
