@@ -1,16 +1,5 @@
 package bank.app;
 
-
-import org.springframework.stereotype.Service;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class FileLockExample {
 //    private final Lock writeLock = new ReentrantLock();
 //    public void writeToFile(String filePath, String content) {

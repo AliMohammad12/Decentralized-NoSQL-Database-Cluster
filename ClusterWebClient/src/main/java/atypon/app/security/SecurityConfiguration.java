@@ -14,7 +14,6 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @EnableWebSecurity
 class SecurityConfiguration {
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();

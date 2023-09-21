@@ -106,6 +106,7 @@ services:
     links:
       - eureka-server
 
+
 #  node3:
 #    build: ./Node
 #    container_name: node3
@@ -143,3 +144,12 @@ services:
 #      - eureka-server
 #    links:
 #      - eureka-server
+
+
+  web-client:
+    build: ./ClusterWebClient
+    container_name: WebClient
+    ports:
+      - "9011:9011"
+    depends_on:
+      - node1

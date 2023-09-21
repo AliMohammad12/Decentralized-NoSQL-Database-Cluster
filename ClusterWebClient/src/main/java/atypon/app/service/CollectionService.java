@@ -54,7 +54,7 @@ public class CollectionService {
         objectNode.put("collectionSchema", schema);
 
 
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user,
                 objectNode.toString(), "collection/create");
@@ -73,7 +73,7 @@ public class CollectionService {
         }
     }
     public List<String> readAllCollections(String databaseName) {
-        String url = "http://localhost:" + Node.getPort() + "/database/read/database";
+        String url = "http://"+Node.getName().toLowerCase()+":8080/database/read/database";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
@@ -101,7 +101,7 @@ public class CollectionService {
         request.put("name", collectionName);
         request.put("database", database);
 
-        String url = "http://localhost:" + Node.getPort() + "/collection/read-fields";
+        String url = "http://"+Node.getName().toLowerCase()+":8080/collection/read-fields";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
@@ -123,7 +123,7 @@ public class CollectionService {
         request.put("name", collectionName);
         request.put("database", database);
 
-        String url = "http://localhost:" + Node.getPort() + "/collection/read";
+        String url = "http://"+Node.getName().toLowerCase()+":8080/collection/read";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
@@ -144,7 +144,7 @@ public class CollectionService {
         request.put("newCollectionName", newName);
         request.put("databaseName", dbName);
 
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user,
                 request.toString(), "collection/update");
@@ -172,7 +172,7 @@ public class CollectionService {
         collection.put("database", database);
         request.put("collection", collection);
 
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user,
                 request.toString(), "collection/delete");

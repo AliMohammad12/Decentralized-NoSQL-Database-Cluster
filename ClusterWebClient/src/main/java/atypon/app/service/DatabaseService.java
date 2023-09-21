@@ -35,7 +35,7 @@ public class DatabaseService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
 
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
@@ -45,7 +45,7 @@ public class DatabaseService {
         }
     }
     public List<String> readAllDatabases() {
-        String url = "http://localhost:" + Node.getPort() + "/database/read/all";
+        String url = "http://"+Node.getName().toLowerCase()+":8080/database/read/all";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
@@ -71,7 +71,7 @@ public class DatabaseService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
 
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
@@ -93,7 +93,7 @@ public class DatabaseService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(writeRequest, headers);
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
 
         try {
             restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);

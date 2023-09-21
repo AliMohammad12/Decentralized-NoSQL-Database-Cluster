@@ -69,7 +69,7 @@ public class DocumentService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> httpEntity = new HttpEntity<>(writeRequest, headers);
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
 
         ResponseEntity<String> response;
         try {
@@ -100,7 +100,7 @@ public class DocumentService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(UserInfo.getUsername(), UserInfo.getPassword());
         HttpEntity<Object> httpEntity = new HttpEntity<>(writeRequest, headers);
-        String url = "http://localhost:9000/load-balance/write";
+        String url = "http://load-balancer:9000/load-balance/write";
 
         ResponseEntity<String> response;
         try {

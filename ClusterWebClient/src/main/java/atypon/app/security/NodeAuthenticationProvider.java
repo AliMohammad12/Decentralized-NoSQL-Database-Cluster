@@ -35,7 +35,7 @@ public class NodeAuthenticationProvider implements AuthenticationProvider {
         try {
             ResponseEntity<NodeInfo> responseEntity;
             responseEntity = restTemplate.exchange(
-                    "http://localhost:9000/api/connect", HttpMethod.POST, requestEntity, NodeInfo.class);
+                    "http://load-balancer:9000/api/connect", HttpMethod.POST, requestEntity, NodeInfo.class);
             NodeInfo nodeInfo = responseEntity.getBody();
             Node.setPort(nodeInfo.getPort());
             Node.setNodeId(nodeInfo.getId());

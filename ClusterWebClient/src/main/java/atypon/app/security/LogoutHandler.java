@@ -28,7 +28,7 @@ public class LogoutHandler implements LogoutSuccessHandler {
         String username = authentication.getName();
         String password = UserInfo.getPassword();
 
-        String url = "http://localhost:9000/api/disconnect";
+        String url = "http://load-balancer:9000/api/disconnect";
         User user = new User(username, password);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
