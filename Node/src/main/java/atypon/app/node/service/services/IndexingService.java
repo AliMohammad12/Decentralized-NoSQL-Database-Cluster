@@ -23,3 +23,4 @@ public interface IndexingService {
     boolean isIndexed(IndexObject indexObject);
     void updateIndexing(String id, JsonNode newValue, JsonNode oldValue, IndexObject indexObject);
 }
+

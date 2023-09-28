@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-// these are CRUD operations of the files and their directory (Synchronized)?
 public class DiskOperations {
     public static void deleteDirectory(String directory) throws IOException {
         Path directoryToDelete = Paths.get(directory);

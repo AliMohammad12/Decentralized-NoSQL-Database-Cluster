@@ -2,7 +2,6 @@ package atypon.app.security;
 
 import atypon.app.model.User;
 import atypon.app.model.UserInfo;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;

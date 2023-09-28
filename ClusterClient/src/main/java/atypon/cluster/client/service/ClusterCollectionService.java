@@ -30,12 +30,6 @@ public class ClusterCollectionService {
     public ClusterCollectionService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-    // todo: make choosing a name for the collection optional !!!
-    @PostConstruct
-    private void init() {
-       // createCollection(NewC.class);
-       // System.out.println(readCollection(NewC.class).toPrettyString());
-    }
     public void createCollection(Class<?> collectionClass) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode collection = objectMapper.createObjectNode();

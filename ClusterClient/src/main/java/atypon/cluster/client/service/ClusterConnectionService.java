@@ -21,10 +21,10 @@ import org.springframework.web.client.RestTemplate;
 public class ClusterConnectionService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterConnectionService.class);
     private final RestTemplate restTemplate;
-    private String username;
-    private String password;
+    private final String username;
+    private final String password;
     @Autowired
-    public ClusterConnectionService(
+    public ClusterConnectionService (
             RestTemplate restTemplate,
             @Value("${cluster.username}") String username,
             @Value("${cluster.password}") String password) {

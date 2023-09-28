@@ -18,3 +18,5 @@ public interface ValidatorService {
     ValidatorResponse IsIndexDeletionAllowed(IndexObject indexObject);
     ValidatorResponse isDocumentRequestValid(DocumentRequestByProperty documentRequestByProperty);
 }
+
+

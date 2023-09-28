@@ -12,5 +12,5 @@ public class UserStatusConfig {
     @Bean(name = "userStatusBean")
     public HashMap<User, UserStatus> getUsersStatus() {
         return new HashMap<>();
-    } // make it concurrent hashmap
+    }
 }

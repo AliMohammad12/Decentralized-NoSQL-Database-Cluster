@@ -17,7 +17,6 @@ public class WriteRequestsController {
     }
     @PostMapping("/write")
     public ResponseEntity<?> handleWriteRequest(@RequestBody WriteRequest writeRequest) {
-
         return writeRequestsService.sendWriteRequest(
                 writeRequest.getRequestData(),
                 writeRequest.getEndpoint(),

@@ -53,9 +53,6 @@ public class BroadcastController {
         collectionService.deleteCollection(request.getCollection());
         return ResponseEntity.ok("Collection has been deleted successfully!");
     }
-
-
-
     @PostMapping("/database/create")
     public ResponseEntity<?> createDatabase(@RequestBody DatabaseRequest databaseRequest) {
         databaseService.createDatabase(databaseRequest.getDatabase());
@@ -73,9 +70,6 @@ public class BroadcastController {
         databaseService.deleteDatabase(request.getDatabase());
         return ResponseEntity.ok("Database deleted successfully!");
     }
-
-
-
     @PostMapping("/document/create")
     public ResponseEntity<String> addDocument(@RequestBody DocumentRequest request) throws JsonProcessingException {
         JsonNode document = request.getDocumentNode();
@@ -85,5 +79,4 @@ public class BroadcastController {
       //  documentService.addDocument(databaseName, collectionName, documentData);
         return ResponseEntity.status(HttpStatus.OK).body("Document has been added successfully!");
     }
-    // delete doc + update later
 }

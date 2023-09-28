@@ -13,12 +13,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 
-// TODO: don't forget to handle releasing lock here
 @Component
 public class DeleteDocumentsByPropertyListener implements EventListener {
     private final DocumentService documentService;
     private final DistributedLocker distributedLocker;
-    private final String DOCUMENT_PREFIX = "DOCUMENT_LOCK:";
+    private final String COLLECTION_PREFIX = "COLLECTION_LOCK:";
     @Autowired
     public DeleteDocumentsByPropertyListener(DocumentService documentService,
                                              DistributedLocker distributedLocker) {
@@ -33,5 +32,6 @@ public class DeleteDocumentsByPropertyListener implements EventListener {
 
         DocumentRequestByProperty request = deleteDocumentsByPropertyEvent.getDocumentRequestByProperty();
         documentService.deleteDocumentByProperty(request);
+        distributedLocker.releaseWriteLock(COLLECTION_PREFIX + request.getCollection());
     }
 }

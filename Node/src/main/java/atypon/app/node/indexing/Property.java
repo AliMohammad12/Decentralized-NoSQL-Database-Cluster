@@ -23,18 +23,3 @@ public class Property<T> {
         return value instanceof Boolean;
     }
 }
-
-/*
-    {
-    "isBroadcast": false,
-    "database": "Sad",
-    "collection": "NewC",
-        "property": {
-            "name": "age"
-            "value": 15
-        }
-    }
-
-    - delete from collection NewC, all documents where age = 15
-    - read from collection NewC, all documents where age = 15
- */

@@ -27,8 +27,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public void addUser(String username, String password) throws IOException {
         logger.info("Registering user '" + username + "' in the cluster!");
-        // split this into Reading an array
-        // and writing an array to file
 
         File jsonFile = new File(getPath().resolve("Users.json").toString());
         ObjectMapper objectMapper = new ObjectMapper();

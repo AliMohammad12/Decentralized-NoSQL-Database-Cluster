@@ -34,23 +34,6 @@ public class ClusterDocumentService {
         this.restTemplate = restTemplate;
     }
 
-    @PostConstruct
-    public void init() throws JsonProcessingException, DocumentReadingException {
-         //createDocument(Account.class, new Account("UUUU", "UUUU", "Admin"));
-//        createDocument(NewC.class, new NewC("Ahmad", 20, 1200, false));
-//        createDocument(NewC.class, new NewC("Mumen", 21, 1500, true));
-//        createDocument(NewC.class, new NewC("ABCCC", 21, 1200, false));
-
-        // deleteDocumentById(NewC.class, "dd051cb5-e096-4dde-a93f-c2e1a34faea7");
-        // deleteDocumentByProperty(NewC.class, new Property("age", 23));
-        // readDocumentById(NewC.class, "3c0f2ad1-f163-4a64-b6ce-4017d6123ccc4ac");
-//        updateDocument(NewC.class, "3c0f2ad1-f163-4a64-b6ce-4017d6ccc4ac",
-//                new Property("name", "Ahmad"),
-//                new Property("age", 25),
-//                new Property("salary", 1500.20));
-
-        //System.out.println(readDocumentByProperty(NewC.class, new Property("age", 20)).toPrettyString());
-    }
     public <T> String createDocument(Class<?> collection, T document) throws JsonProcessingException {
         String collectionName = collection.getSimpleName();
 

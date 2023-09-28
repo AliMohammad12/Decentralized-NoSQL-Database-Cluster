@@ -52,7 +52,7 @@ public class CollectionServiceImpl implements CollectionService {
     }
     @Override
     public void createCollection(CollectionSchema collectionSchema) throws JsonProcessingException {
-        JsonNode jsonSchema = jsonService.generateJsonSchema2(collectionSchema.getFields());
+        JsonNode jsonSchema = jsonService.generateJsonSchema(collectionSchema.getFields());
         Collection collection = collectionSchema.getCollection();
         String databaseName = collection.getDatabase().getName();
         String schemaJsonString = jsonService.convertJsonToString(jsonSchema);
@@ -114,7 +114,6 @@ public class CollectionServiceImpl implements CollectionService {
         redisCachingService.cache(fieldsCacheKey, fields, 90);
         return fields;
     }
-    // todo: indexing file content should change too + tree!
     @Override
     public void updateCollectionName(String databaseName, String oldCollectionName, String newCollectionName) {
         Path path = getPath().
@@ -134,7 +133,6 @@ public class CollectionServiceImpl implements CollectionService {
         logger.info("Successfully updated the name of '" + oldCollectionName
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }
-
     @Override
     public void deleteCollection(Collection collection) throws IOException {
         Path path = getPath().

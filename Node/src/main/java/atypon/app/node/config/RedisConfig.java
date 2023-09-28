@@ -27,11 +27,3 @@ public class RedisConfig {
         return redisTemplate;
     }
 }
-
-
-/*
-    @Value("${redis.hostname}")
-    private String redisHostName;
-    @Value("${redis.port}")
-    private int redisPort;
- */

@@ -1,7 +1,9 @@
 package atypon.app.node.indexing.bplustree;
 
 
-public class BPlusTree<TKey extends Comparable<TKey>, TValue> {
+import java.io.Serializable;
+
+public class BPlusTree<TKey extends Comparable<TKey>, TValue> implements Serializable {
     private BTreeNode<TKey> root;
 
     public BPlusTree() {

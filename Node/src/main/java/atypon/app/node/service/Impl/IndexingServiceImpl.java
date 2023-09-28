@@ -27,11 +27,43 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+/*
+    1- Index Creation: Create Tree in the specified collection and set it UP
+    then serialize the tree into the Indexing directory inside the collection.
+    then add the tree to indexRegistry (main memory to be ready to use)
 
+    2- Index Deletion: Delete Tree serialized file in the indexing directory,
+    and clear it from the main memory.
+
+    3- Connect: Initialize indexing by deserialization of all the indexing in the files and
+    putting them in the main memory.
+
+    4- Disconnect: Clear Indexing from main memory and serialize the trees again.
+
+    ...................................................................
+    -I had two options
+    1- deserialize the tree from the disk each time we use indexing (Reads/Deletes by property) - Many disk operations => Slow/Memory Efficient.
+    2- deserialize the trees and store them in main memory when the user connects, so they can be ready any time the user => Fast/Bad Memory.
+
+
+    Imagine we have one user, that connects from 20 devices, let's say that it's a company that registered in our database.
+    Each device in that company connects to the database BUT SAME USER and does one operation:
+
+    -We choose 1:
+    The number of disk operations will be NUMBER_OF_DEVICES * NUMBER_DISK_OPERATIONS_FOR_EACH_QUERY.
+
+    -We choose 2:
+    The number of disk operations => 1 (When the first device connects, we set up the trees).
+    and this one is extremely fast because B+Trees deserialization are fast to deserialize.
+    then even if we have a million devices connected they will have the same speed exactly!
+
+
+    I'm choosing 2!
+ */
 @Service
 public class IndexingServiceImpl implements IndexingService {
     private static final Logger logger = LoggerFactory.getLogger(IndexingService.class);
-    private HashMap<IndexObject, BPlusTree> indexRegistry;
+    private final HashMap<IndexObject, BPlusTree> indexRegistry;
     private final JsonService jsonService;
     @Autowired
     public IndexingServiceImpl(@Qualifier("indexRegistry") HashMap<IndexObject, BPlusTree> indexRegistry,
@@ -73,7 +105,7 @@ public class IndexingServiceImpl implements IndexingService {
             String property = objNode.get("property").asText();
             IndexObject indexObject = new IndexObject(username, database, collection, property);
             createIndexing(indexObject);
-            logger.info("Creating Index: " + indexObject.toString());
+            logger.info("Creating Index: " + indexObject);
         }
     }
     @Override
@@ -108,7 +140,7 @@ public class IndexingServiceImpl implements IndexingService {
             Map.Entry<IndexObject, BPlusTree> entry = iterator.next();
             IndexObject indexObject = entry.getKey();
             if (indexObject.getUsername().equals(username)) {
-                logger.info("Clearing Index: " + indexObject.toString() + " from B+Tree!");
+                logger.info("Clearing Index: " + indexObject + " from B+Tree!");
                 iterator.remove();
             }
         }
@@ -128,7 +160,7 @@ public class IndexingServiceImpl implements IndexingService {
 
             if (isIndexed(indexObject)) {
                 BPlusTree bPlusTree = indexRegistry.get(indexObject);
-                addDocumentToTree(bPlusTree, id, type, node);
+                addDocumentToTree(bPlusTree, id, type, node, field);
             }
         }
     }
@@ -314,11 +346,11 @@ public class IndexingServiceImpl implements IndexingService {
         Collection collection = new Collection(indexObject.getCollection(), new Database(indexObject.getDatabase()));
         ArrayNode jsonArray = readCollection(collection);
         String property = indexObject.getProperty();
-        logger.info("Setting up indexing for the property '" + type + "'!");
+        logger.info("Setting up indexing for the property '" + property + "'!");
         for (JsonNode element : jsonArray) {
             JsonNode propertyNode = element.get(property);
             String id = element.get("id").asText();
-            addDocumentToTree(bPlusTree, id, type, propertyNode);
+            addDocumentToTree(bPlusTree, id, type, propertyNode, property);
         }
     }
     @Override
@@ -362,8 +394,8 @@ public class IndexingServiceImpl implements IndexingService {
 //        return documents;
 //    }
 
-    private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node) {
-        logger.info("Adding id '" + id + " to the '" + node.toString() + "' B+Tree inside " +
+    private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node, String propertyName) {
+        logger.info("Adding id '" + id + " to the '" + propertyName + "' B+Tree inside " +
                 "the node with value '" + node.asText() + "' !");
         switch (type) {
             case "string" -> {

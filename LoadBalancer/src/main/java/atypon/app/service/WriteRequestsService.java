@@ -31,8 +31,10 @@ public class WriteRequestsService {
         headers.setBasicAuth(user.getUsername(), user.getPassword());
         HttpEntity<Object> requestEntity = new HttpEntity<>(request, headers);
         try {
-            ResponseEntity<?> response = restTemplate.exchange(
-                    "http://NODE/"+endpoint, HttpMethod.POST, requestEntity, String.class);
+            ResponseEntity<?> response =
+                    restTemplate.exchange(
+                    "http://NODE/"+endpoint,
+                            HttpMethod.POST, requestEntity, String.class);
             return response;
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());

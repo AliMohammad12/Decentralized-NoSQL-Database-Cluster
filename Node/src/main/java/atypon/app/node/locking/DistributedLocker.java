@@ -36,12 +36,11 @@ public class DistributedLocker {
         this.kafkaService = kafkaService;
     }
     /* 
-        Implementing rate limiter for BruteForce attacks, can help here
+        Implementing rate limiter for DoS attacks, can help here too
 
         Whenever you need to lock anything in that tree you go down from the root and acquire a
         read-lock on everything except the target node itself. The target node gets write lock.
      */
-
 
     //  Read locks: These locks allow concurrent read operations, but prevent write operations.
     private <T> LockExecutionResult<T> readLock(final String key,
@@ -121,7 +120,7 @@ public class DistributedLocker {
                                                        final int lockTimeoutSeconds,
                                                        final Callable<T> task) throws Exception {
         return tryToGetLock(() -> {
-            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 5)) { // hold for extra time
+            if (!acquireReadLock(DB_PREFIX + dbName,  lockTimeoutSeconds + 5)) {
                 return null;
             }
             try {
@@ -168,7 +167,7 @@ public class DistributedLocker {
             // DB lock acquired
             try {
                 return tryToGetLock(() -> {
-                    if (!acquireReadLock(COLLECTION_PREFIX + collectionName,  lockTimeoutSeconds + 5)) { // hold for extra time
+                    if (!acquireReadLock(COLLECTION_PREFIX + collectionName,  lockTimeoutSeconds + 5)) {
                         return null;
                     }
                     // Collection lock acquired
@@ -237,11 +236,10 @@ public class DistributedLocker {
             sleep(200);
         }
     }
-
     private boolean acquireReadLock(String lockKey, int lockTimeoutSeconds) {
         final Boolean lockAcquired = valueOps.setIfAbsent(lockKey, "ReadLock", lockTimeoutSeconds, TimeUnit.SECONDS);
         if (lockAcquired == Boolean.FALSE) {
-            String value = (String)valueOps.get(lockKey);
+            String value = valueOps.get(lockKey);
             if (value.equals("WriteLock")) {
                 LOG.error("Failed to acquire {} lock for key '{}'", "ReadLock", lockKey);
                 return false;
@@ -251,7 +249,7 @@ public class DistributedLocker {
         long activeReadOps = valueOps.increment(lockKey + ":counter", 1);
         LOG.info("Active read operations: '{}' for '{}' lock", (activeReadOps), (lockKey));
         kafkaService.broadCast(TopicType.Share_locking, new ShareLockEvent(lockKey, "ReadLock", lockTimeoutSeconds));
-        sleep(200);
+        sleep(100);
         return true;
     }
 
@@ -263,7 +261,7 @@ public class DistributedLocker {
         }
         LOG.info("Successfully acquired {} lock for key '{}'", "WriteLock", lockKey);
         kafkaService.broadCast(TopicType.Share_locking, new ShareLockEvent(lockKey, "WriteLock", lockTimeoutSeconds));
-        sleep(200);
+        sleep(100);
         return true;
     }
 

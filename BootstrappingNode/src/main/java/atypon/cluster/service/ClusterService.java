@@ -1,12 +1,15 @@
 package atypon.cluster.service;
 
 import org.springframework.stereotype.Service;
+import org.thymeleaf.util.EscapedAttributeUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ClusterService {
@@ -48,20 +51,21 @@ public class ClusterService {
             Process process = Runtime.getRuntime().exec(command);
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
-            boolean skipHeader = false;
+            int skipHeader = 0;
             while ((line = reader.readLine()) != null) {
-                if (!skipHeader) {
-                    skipHeader = true;
+                if (skipHeader < 2) {
+                    skipHeader++;
                     continue;
                 }
                 String[] parts = line.trim().split("\\s+");
-                if (parts.length >= 3) {
-                    String containerName = parts[0];
-                    String cmd = parts[1]+ "  " + parts[2] + "  " + parts[3];
-//                    String state = parts[4];
-//                    String ports = parts[5];
-                    containerStatuses.put(containerName, new String[]{cmd, "NotYet", "port"});
+                String containerName = parts[0];
+                String state = parts[parts.length - 2];
+                String port = parts[parts.length - 1];
+                if (containerName.equals("zookeeper")) {
+                    port = parts[parts.length - 3];
+                    state = parts[parts.length - 4];
                 }
+                containerStatuses.put(containerName, new String[]{state, extractPortNumber(port)});
             }
             process.waitFor();
         } catch (IOException | InterruptedException e) {
@@ -70,5 +74,11 @@ public class ClusterService {
         return containerStatuses;
     }
 
+    public static String extractPortNumber(String input) {
+        String[] parts = input.split(":");
+        String[] portParts = parts[1].split("->");
+        String extractedPort = portParts[0];
+        return extractedPort;
+    }
 }
 

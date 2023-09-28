@@ -41,28 +41,7 @@ public class JsonServiceImpl implements JsonService {
         return path;
     }
     @Override
-    public JsonNode generateJsonSchema(Class<?> clazz) {
-        SchemaGeneratorConfigBuilder configBuilder =
-                new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-        SchemaGeneratorConfig config = configBuilder.build();
-
-        configBuilder.forTypesInGeneral()
-                .withAdditionalPropertiesResolver(scope -> Object.class);
-        configBuilder.forFields()
-                .withAdditionalPropertiesResolver(field -> field.getType().getErasedType() == Object.class
-                        ? null : Void.class);
-        configBuilder.forFields().withRequiredCheck(field -> true);
-        configBuilder.forMethods()
-                .withAdditionalPropertiesResolver(method -> method.getType().getErasedType() == Map.class
-                        ? method.getTypeParameterFor(Map.class, 1) : Void.class);
-
-        SchemaGenerator generator = new SchemaGenerator(config);
-        JsonNode jsonSchema = generator.generateSchema(clazz);
-        return jsonSchema;
-    }
-
-    @Override
-    public JsonNode generateJsonSchema2(Map<String, Object> properties) {
+    public JsonNode generateJsonSchema(Map<String, Object> properties) {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode schema = objectMapper.createObjectNode();
         schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
@@ -95,7 +74,7 @@ public class JsonServiceImpl implements JsonService {
     }
     @Override
     public ArrayNode readJsonArray(String path) throws IOException {
-        List<String> documentIds = DiskOperations.readDirectory(path.toString());
+        List<String> documentIds = DiskOperations.readDirectory(path);
         return readAsJsonArray(documentIds, Path.of(path));
     }
     @Override
@@ -124,7 +103,7 @@ public class JsonServiceImpl implements JsonService {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readTree(jsonContent);
     }
-    @Override // use disk operations here
+    @Override
     public User findByUsername(String username) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -143,7 +122,7 @@ public class JsonServiceImpl implements JsonService {
         return null;
     }
 
-    @Override // reading from file!
+    @Override
     public String getPropertyTypeFromSchema(IndexObject indexObject) {
         ObjectMapper objectMapper = new ObjectMapper();
         String database = indexObject.getDatabase();

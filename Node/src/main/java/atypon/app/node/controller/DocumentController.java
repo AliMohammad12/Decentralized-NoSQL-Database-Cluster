@@ -76,9 +76,8 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
-    // todo: Locking + Caching must be done here
-    @RequestMapping("/read-property") // Fully Okay
-    public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) throws IOException {
+    @RequestMapping("/read-property")
+    public ResponseEntity<?> readDocumentsByProperty(@RequestBody DocumentRequestByProperty request) {
         String database = request.getDatabase();
         String collection = request.getCollection();
         try {
@@ -174,7 +173,10 @@ public class DocumentController {
                 if (!validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
                 }
-                kafkaService.broadCast(TopicType.Update_Document, new UpdateDocumentEvent(request));
+
+                kafkaService.broadCast(TopicType.Update_Document,
+                        new UpdateDocumentEvent(request));
+
                 return ResponseEntity.ok("Document has been updated successfully!");
             });
             return (ResponseEntity<String>) result.resultIfLockAcquired;

@@ -1,6 +1,7 @@
 package atypon.app.node.security;
 
 import atypon.app.node.model.Node;
+import com.netflix.eureka.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;

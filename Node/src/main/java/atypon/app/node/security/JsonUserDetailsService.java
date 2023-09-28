@@ -16,7 +16,6 @@ public class JsonUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            // add this to jsonService under method findByUsername
             File jsonFile = new File("Storage/" + Node.getName() + "/Users.json");
             if (!jsonFile.exists()) {
                 throw new UsernameNotFoundException("User data file not found");

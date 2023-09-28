@@ -34,23 +34,8 @@ public class ClusterDatabaseService {
         this.restTemplate = restTemplate;
     }
     @PostConstruct
-    private void init() throws InterruptedException {
+    private void init()  {
         createDatabase();
-//        for (int j = 0; j < 10; j++) {
-//            ExecutorService executor = Executors.newFixedThreadPool(1);
-//            for (int i = 0; i < 1; i++) {
-//                executor.execute(() -> {
-//                    createDatabase();
-//                });
-//            }
-//
-//            ExecutorService executor2 = Executors.newFixedThreadPool(1);
-//            for (int i = 0; i < 1; i++) {
-//                executor2.execute(() -> {
-//                    createDatabase();
-//                });
-//            }
-//        }
     }
     private void createDatabase() {
         DatabaseInfo.setName(databaseName);

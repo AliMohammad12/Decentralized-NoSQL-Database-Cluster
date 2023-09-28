@@ -9,11 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-
-// Reading ID => put(ID, document) to cache
-// Delete Document => delete
-// Update Document => Delete key, add key with new value!
 @Service
 public class LRUCache<K, V> {
     private static final Logger logger = LoggerFactory.getLogger(LRUCache.class);

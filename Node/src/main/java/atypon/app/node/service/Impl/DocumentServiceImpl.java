@@ -237,7 +237,6 @@ public class DocumentServiceImpl implements DocumentService {
         int versionNumber = documentBeforeUpdate.get("version").asInt();
         int requestVersionNumber = documentInfo.get("version").asInt();
         if (versionNumber == requestVersionNumber) {
-            // - check for each property if it's indexed, if it's indexed we need to fix our bPlusTree
             JsonNode documentData = updateRequest.get("data");
             String nodeNameIndexingUpdate = documentInfo.get("NodeName").asText();
             logger.info("Updating the document with id '" + id + "' !");

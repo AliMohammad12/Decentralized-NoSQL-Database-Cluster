@@ -19,7 +19,7 @@ public class ConnectionService {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionService.class);
     private final RestTemplate connectionRestTemplate;
     private final RestTemplate restTemplate;
-    private HashMap<User, UserStatus> statusHashMap;
+    private final HashMap<User, UserStatus> statusHashMap;
     @Autowired
     public ConnectionService(@Qualifier("connectionBean") RestTemplate connectionRestTemplate,
                              @Qualifier("userStatusBean") HashMap<User, UserStatus> statusHashMap,

@@ -58,8 +58,6 @@ public class DatabaseServiceImpl implements DatabaseService {
         redisCachingService.cache(database.getName(), readResult, 120);
         return readResult;
     }
-
-    // todo: indexing file content should change too + tree!
     @Override
     public void updateDatabaseName(String oldDatabaseName, String newDatabaseName) {
         Path path = getPath();

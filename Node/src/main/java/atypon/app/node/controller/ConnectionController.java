@@ -25,14 +25,16 @@ public class ConnectionController {
     }
     @PostMapping("/connect")
     public ResponseEntity<?> connect(@RequestBody User user) throws IOException {
-        logger.info("Connecting user: " + user.getUsername());
+        logger.info("Connecting user '{}'", user.getUsername());
         indexingService.indexingInitializer();
         return ResponseEntity.ok(new NodeInfo(Node.getPort(), Node.getNodeId(), Node.getName()));
     }
     @PostMapping("/disconnect")
     public ResponseEntity<?> disconnect(@RequestBody User user) {
-        logger.info("Disconnecting user: " + user.getUsername());
+        logger.info("Disconnecting user '{}'", user.getUsername());
         indexingService.IndexingFinalizer();
         return ResponseEntity.ok("Successfully disconnected from the node!");
     }
 }
+
+

@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface JsonService {
-    JsonNode generateJsonSchema(Class<?> clazz);
-    JsonNode generateJsonSchema2(Map<String, Object> properties);
+    JsonNode generateJsonSchema(Map<String, Object> properties);
     String convertJsonToString(JsonNode jsonNode) throws JsonProcessingException;
     ArrayNode readJsonArray(String directory) throws IOException;
     ArrayNode readAsJsonArray(List<String> documentsId, Path path) throws IOException;

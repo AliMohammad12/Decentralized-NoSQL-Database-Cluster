@@ -12,19 +12,16 @@ public class LoadBalancerConfig {
     public RestTemplate registrationRestTemplate() {
         return new RestTemplate();
     }
-
     @Bean(name = "connectionBean")
     @LoadBalanced
     public RestTemplate connectionRestTemplate() {
         return new RestTemplate();
     }
-
     @Bean(name = "writeRequestsBean")
     @LoadBalanced
     public RestTemplate writeRequestsRestTemplate() {
         return new RestTemplate();
     }
-
     @Bean(name = "nonBalancedRestTemplateBean")
     public RestTemplate restTemplate() {
         return new RestTemplate();

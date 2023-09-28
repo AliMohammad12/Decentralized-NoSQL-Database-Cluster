@@ -31,13 +31,11 @@ public class CustomAnnotationAspect {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CreateCollection.class));
         SimpleMetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
-
         for (BeanDefinition beanDefinition : scanner.findCandidateComponents("")) {
             MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(beanDefinition.getBeanClassName());
             Class<?> annotatedClass = Class.forName(metadataReader.getClassMetadata().getClassName());
             annotatedClasses.add(annotatedClass);
         }
-
         return annotatedClasses;
     }
 }

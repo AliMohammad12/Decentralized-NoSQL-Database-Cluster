@@ -1,4 +1,3 @@
-atypon/cluster/request/ApiRequest.class
 atypon/cluster/security/SuccessHandler.class
 atypon/cluster/controller/RegistrationController.class
 atypon/cluster/controller/ClusterController.class
@@ -8,5 +7,5 @@ atypon/cluster/model/User.class
 atypon/cluster/security/SecurityConfiguration.class
 atypon/cluster/config/RestTemplateConfig.class
 atypon/cluster/service/ClusterService.class
-atypon/cluster/request/UserRequest.class
 atypon/cluster/controller/AdminController.class
+atypon/cluster/request/RegistrationRequest.class

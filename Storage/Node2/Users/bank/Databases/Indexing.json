@@ -1,1 +1,16 @@
-[]
+[ {
+  "username" : "bank",
+  "database" : "BankAppDb",
+  "collection" : "Customer",
+  "property" : "accountId"
+}, {
+  "username" : "bank",
+  "database" : "BankAppDb",
+  "collection" : "Customer",
+  "property" : "balance"
+}, {
+  "username" : "bank",
+  "database" : "BankAppDb",
+  "collection" : "Transaction",
+  "property" : "senderId"
+} ]

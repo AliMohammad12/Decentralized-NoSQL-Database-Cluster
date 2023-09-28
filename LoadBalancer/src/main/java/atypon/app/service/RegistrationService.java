@@ -25,8 +25,10 @@ public class RegistrationService {
         HttpEntity<Object> requestEntity = new HttpEntity<>(userRequest, headers);
 
         try {
-            return registrationRestTemplate.exchange(
-                    "http://NODE/user/register", HttpMethod.POST, requestEntity, String.class);
+            return registrationRestTemplate.exchange("http://NODE/user/register",
+                    HttpMethod.POST, requestEntity, String.class);
+
+
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
