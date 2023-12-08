@@ -1,6 +1,5 @@
 package atypon.cluster.client.shutdown;
 
-import atypon.cluster.client.models.NodeInfo;
 import atypon.cluster.client.models.User;
 import atypon.cluster.client.models.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;

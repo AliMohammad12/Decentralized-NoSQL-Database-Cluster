@@ -19,6 +19,5 @@ public class UpdateCollectionEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.collectionUpdateRequest = collectionUpdateRequest;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }

@@ -129,7 +129,9 @@ public class CollectionServiceImpl implements CollectionService {
         if (redisCachingService.isCached(fieldsCacheKey)) {
             redisCachingService.deleteCachedValue(fieldsCacheKey);
         }
-
+        if (redisCachingService.isCached(databaseName)) {
+            redisCachingService.deleteCachedValue(databaseName);
+        }
         logger.info("Successfully updated the name of '" + oldCollectionName
                 + "' collection to '" + newCollectionName + "' within '" + databaseName + "' database!");
     }

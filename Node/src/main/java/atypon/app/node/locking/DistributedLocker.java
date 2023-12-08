@@ -72,7 +72,7 @@ public class DistributedLocker {
             if (!acquireWriteLock(key, lockTimeoutSeconds)) {
                 return null;
             }
-            final long startTime = TimeUnit.SECONDS.toMillis(lockTimeoutSeconds);
+            final long startTime = System.currentTimeMillis();
             try {
                 T taskResult = task.call();
                 ResponseEntity<?> response = (ResponseEntity<?>) taskResult;
@@ -83,7 +83,7 @@ public class DistributedLocker {
                         LOG.info("Waiting for key '{}' to get unlocked! ", key);
                         sleep(50);
                     }
-                    if (System.currentTimeMillis() - startTime > lockTimeoutSeconds + 500) {
+                    if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(lockTimeoutSeconds) + 250) {
                         LOG.info("Potential Dead-Lock detected! key '" + key + "' has held the lock " +
                                 "for over '"+ lockTimeoutSeconds +"' ! Removing the lock from Redis!");
                     }
@@ -99,7 +99,6 @@ public class DistributedLocker {
             }
         }, key, maximumWaitingTimeToAcquireLock);
     }
-
 
     public <T> LockExecutionResult<T> databaseReadLock(final String dbName,
                                                 final int maximumWaitingTimeToAcquireLock,
@@ -236,6 +235,7 @@ public class DistributedLocker {
             sleep(200);
         }
     }
+
     private boolean acquireReadLock(String lockKey, int lockTimeoutSeconds) {
         final Boolean lockAcquired = valueOps.setIfAbsent(lockKey, "ReadLock", lockTimeoutSeconds, TimeUnit.SECONDS);
         if (lockAcquired == Boolean.FALSE) {
@@ -289,6 +289,7 @@ public class DistributedLocker {
             }
         }
     }
+
     private static void sleep(final long sleepTimeMillis) {
         try {
             Thread.sleep(sleepTimeMillis);

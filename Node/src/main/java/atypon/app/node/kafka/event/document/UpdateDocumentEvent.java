@@ -19,6 +19,5 @@ public class UpdateDocumentEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.documentUpdateRequest = documentUpdateRequest;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }

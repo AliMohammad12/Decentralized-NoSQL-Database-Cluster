@@ -105,7 +105,6 @@ public class IndexingServiceImpl implements IndexingService {
             String property = objNode.get("property").asText();
             IndexObject indexObject = new IndexObject(username, database, collection, property);
             createIndexing(indexObject);
-            logger.info("Creating Index: " + indexObject);
         }
     }
     @Override
@@ -169,7 +168,7 @@ public class IndexingServiceImpl implements IndexingService {
         return indexRegistry.containsKey(indexObject);
     }
 
-    @Override // Fixed! TEST Result:
+    @Override // Fixed
     public List<String> retrieveAndRemoveByProperty(String database, String collection, Property property)  {
         logger.info("Retrieving documents and removing them from tree " +
                 "in database '" + database + "' within collection '"
@@ -211,14 +210,13 @@ public class IndexingServiceImpl implements IndexingService {
         return documentList;
     }
     @Override
-    public List<String> retrieveByProperty(String database, String collection, Property property) throws IOException {
+    public List<String> retrieveByProperty(String database, String collection, Property property){
         logger.info("Retrieving documents in database '" + database + "' within collection '"
                 + collection + "' with property '" + property.toString() + "' !" );
         String username = getUsername();
         IndexObject indexObject = new IndexObject(username, database, collection, property.getName());
         BPlusTree bPlusTree = indexRegistry.get(indexObject);
-
-        List<String> documentList = null;
+        List<String> documentList =  null;
         if (property.isIntegerValue()) {
             int value = (int) property.getValue();
             documentList = (List<String>) bPlusTree.search(value);
@@ -253,7 +251,7 @@ public class IndexingServiceImpl implements IndexingService {
 
                 logger.info("Removing document with the id '" + id +"' from " +
                         "Tree's Node with value '" + oldValueString+"' and " +
-                        "adding it to Tree's Node with value '" + newValueString+ "' !");
+                        "adding it to Tree's Node with value '" + newValueString + "' !");
 
                 listNew = (List<String>) bPlusTree.search(newValueString);
                 listOld = (List<String>) bPlusTree.search(oldValueString);
@@ -364,36 +362,6 @@ public class IndexingServiceImpl implements IndexingService {
                 resolve("Documents");
         return jsonService.readJsonArray(path.toString());
     }
-//    public void deleteDocuments(Path path, List<String> documentList) throws IOException {
-//        for (String id : documentList) {
-//            if (DiskOperations.isFileExists(path.resolve(id + ".json").toString())) {
-//                DiskOperations.deleteFile(path.resolve(id + ".json").toString());
-//                logger.info("Deleting Document with id: " + id);
-//            }
-//        }
-//    }
-//    public ArrayNode readDocuments(Path path, List<String> documentList) throws IOException {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        ArrayNode documents = objectMapper.createArrayNode();
-//
-//        if (documentList != null) {
-//            Iterator<String> iterator = documentList.iterator();
-//            while (iterator.hasNext()) {
-//                String id = iterator.next();
-//                String jsonFilePath = path.resolve(id + ".json").toString();
-//
-//                // instead of doing 2 calls, try doing try-catch
-//                if (DiskOperations.isFileExists(jsonFilePath)) {
-//                    documents.add(jsonService.readJsonNode(jsonFilePath));
-//                    logger.info("Reading Document with id: " + id);
-//                } else {
-//                    iterator.remove(); // ----------> lazy deletion!
-//                }
-//            }
-//        }
-//        return documents;
-//    }
-
     private void addDocumentToTree(BPlusTree bPlusTree, String id, String type, JsonNode node, String propertyName) {
         logger.info("Adding id '" + id + " to the '" + propertyName + "' B+Tree inside " +
                 "the node with value '" + node.asText() + "' !");

@@ -74,7 +74,7 @@ public class DocumentServiceImpl implements DocumentService {
         logger.info("Successfully created the document: \n" + document.toPrettyString());
     }
 
-    @Override // DONE, Pending: Caching + locking test
+    @Override // DONE, Tested
     public ArrayNode readDocumentProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Reading documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
@@ -126,7 +126,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
         return documentsArray;
     }
-    @Override // DONE, Pending: Locking + Caching test!
+    @Override // DONE, Tested
     public void deleteDocumentByProperty(DocumentRequestByProperty request) throws IOException {
         logger.info("Deleting documents with property '" + request.getProperty() + "' in database '" +
                 "" + request.getDatabase() +"' in collection '" + request.getCollection() + "' !");
@@ -179,7 +179,6 @@ public class DocumentServiceImpl implements DocumentService {
                 }
             }
         }
-
         for (String id : documentsId) {
              DiskOperations.deleteFile(path.resolve(id+".json").toString());
              redisCachingService.deleteCachedValue(id);
@@ -221,7 +220,8 @@ public class DocumentServiceImpl implements DocumentService {
         }
         DiskOperations.deleteFile(path.toString());
     }
-    @Override // working
+
+    @Override
     public void updateDocument(DocumentUpdateRequest request) throws IOException {
         JsonNode updateRequest = request.getUpdateRequest();
         String collection = updateRequest.get("CollectionName").asText();

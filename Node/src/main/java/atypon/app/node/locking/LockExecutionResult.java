@@ -4,7 +4,6 @@ public class LockExecutionResult<T> {
     private final boolean lockAcquired;
     public final T resultIfLockAcquired;
     public final Exception exception;
-
     private LockExecutionResult(boolean lockAcquired, T resultIfLockAcquired, final Exception exception) {
         this.lockAcquired = lockAcquired;
         this.resultIfLockAcquired = resultIfLockAcquired;

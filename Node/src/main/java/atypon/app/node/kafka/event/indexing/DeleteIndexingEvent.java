@@ -18,6 +18,5 @@ public class DeleteIndexingEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.indexObject = indexObject;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }

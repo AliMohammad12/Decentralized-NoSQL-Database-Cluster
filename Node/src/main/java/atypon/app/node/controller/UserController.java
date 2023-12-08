@@ -27,19 +27,13 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    private final UserService userService;
     private final KafkaService kafkaService;
     private final ValidatorService validatorService;
-    private final ValueOperations<String, Object> valueOps;
     @Autowired
-    public UserController(UserService userService,
-                          KafkaService kafkaService,
-                          ValidatorService validatorService,
-                          final RedisTemplate<String, Object> redisTemplate) {
-        this.userService = userService;
+    public UserController(KafkaService kafkaService,
+                          ValidatorService validatorService) {
         this.kafkaService = kafkaService;
         this.validatorService = validatorService;
-        valueOps = redisTemplate.opsForValue();
     }
     @PostMapping("/register")
     public synchronized ResponseEntity<String> registerUser(@RequestBody UserRequest request) throws IOException {
@@ -50,15 +44,5 @@ public class UserController {
         }
         kafkaService.broadCast(TopicType.Create_User, new CreateUserEvent(request));
         return ResponseEntity.ok("The user " + user.getUsername() + " was registered successfully!");
-    }
-    @PostMapping("/in")
-    public ResponseEntity<String> redisTestIn(@RequestBody DocumentRequest request) throws IOException {
-        JsonNode jsonNode = request.getDocumentNode();
-        valueOps.set(jsonNode.get("id").asText(), jsonNode.get("data"), 30, TimeUnit.SECONDS);
-        return ResponseEntity.ok("Inserted");
-    }
-    @PostMapping("/out")
-    public ResponseEntity<?> redisTestOut(@RequestBody String id)  {
-        return ResponseEntity.ok(valueOps.get(id));
     }
 }

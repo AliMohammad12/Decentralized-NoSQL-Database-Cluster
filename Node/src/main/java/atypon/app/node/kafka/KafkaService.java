@@ -21,3 +21,4 @@ public class KafkaService {
         kafkaTemplate.send(topicType.getTopicValue(), event);
     }
 }
+

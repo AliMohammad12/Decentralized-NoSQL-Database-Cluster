@@ -61,13 +61,13 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isCollectionExists(String databaseName, String collectionName) {
-        logger.info("Checking if collection '" + collectionName + "' exists inside '" + databaseName + "' !");
         ValidatorResponse validateDatabase = isDatabaseExists(databaseName);
         if (!validateDatabase.isValid()) {
             validateDatabase.setMessage("Database with the name '" + databaseName + "' doesn't exist!");
             logger.info(validateDatabase.getMessage());
             return validateDatabase;
         }
+        logger.info("Checking if collection '" + collectionName + "' exists inside '" + databaseName + "' !");
         Path path = getPath().resolve(databaseName).resolve("Collections").resolve(collectionName);
         ValidatorResponse validatorResponse = new ValidatorResponse(DiskOperations.isDirectoryExists(path.toString()));
         if (validatorResponse.isValid()) {
@@ -109,13 +109,12 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentExists(String database, String collection, JsonNode document) {
-        logger.info("Checking if the document exists " +
-                "in database '" + database +"' in collection '" + collection + "' :" + document.toPrettyString());
-
         ValidatorResponse validateCollection = isCollectionExists(database, collection);
         if (!validateCollection.isValid()) {
             return validateCollection;
         }
+        logger.info("Checking if the document exists " +
+                "in database '" + database +"' in collection '" + collection + "' :" + document.toPrettyString());
         if (document.get("id") == null) {
             logger.info("Invalid Document, Please send the Id!");
             return new ValidatorResponse("Invalid Document, Please send the Id!", false);
@@ -133,11 +132,11 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isDocumentUpdateRequestValid(String database, String collection, JsonNode documentData, JsonNode documentInfo) {
-        logger.info("Validating document update request!");
         ValidatorResponse validatorResponse = isDocumentExists(database, collection, documentInfo);
         if (!validatorResponse.isValid()) {
             return validatorResponse;
         }
+        logger.info("Validating document update request!");
         if (documentInfo.get("version") == null) {
             logger.info("Update request invalid, Please include the 'version' in the document info");
             return new ValidatorResponse("Update request invalid, Please include the 'version' in the document info", false);
@@ -197,14 +196,14 @@ public class ValidatorServiceImpl implements ValidatorService {
     }
     @Override
     public ValidatorResponse isIndexCreationAllowed(IndexObject indexObject) {
-        logger.info("Validating index creation request!");
-
         String database = indexObject.getDatabase();
         String collection = indexObject.getCollection();
         ValidatorResponse validatorResponse = isCollectionExists(database, collection);
         if (!validatorResponse.isValid()) {
             return validatorResponse;
         }
+        logger.info("Validating index creation request!");
+
         ObjectMapper objectMapper = new ObjectMapper();
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection);
 
@@ -238,8 +237,6 @@ public class ValidatorServiceImpl implements ValidatorService {
 
     @Override
     public ValidatorResponse isDocumentRequestValid(DocumentRequestByProperty documentRequestByProperty) {
-        logger.info("Validating document request!");
-
         String database = documentRequestByProperty.getDatabase();
         String collection = documentRequestByProperty.getCollection();
 
@@ -247,6 +244,8 @@ public class ValidatorServiceImpl implements ValidatorService {
         if (!validatorResponse.isValid()) {
             return validatorResponse;
         }
+        logger.info("Validating document request!");
+
 
         ObjectMapper objectMapper = new ObjectMapper();
         Path path = getPath().resolve(database).resolve("Collections").resolve(collection);

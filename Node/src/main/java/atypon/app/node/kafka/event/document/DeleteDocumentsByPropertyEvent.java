@@ -18,6 +18,5 @@ public class DeleteDocumentsByPropertyEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.documentRequestByProperty = documentRequestByProperty;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }

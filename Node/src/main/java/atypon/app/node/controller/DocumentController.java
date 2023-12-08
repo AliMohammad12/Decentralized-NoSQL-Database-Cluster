@@ -9,6 +9,7 @@ import atypon.app.node.kafka.event.document.UpdateDocumentEvent;
 import atypon.app.node.locking.DistributedLocker;
 import atypon.app.node.locking.LockExecutionResult;
 import atypon.app.node.caching.RedisCachingService;
+import atypon.app.node.model.Document;
 import atypon.app.node.request.document.DocumentUpdateRequest;
 import atypon.app.node.request.document.DocumentRequest;
 import atypon.app.node.request.document.DocumentRequestByProperty;
@@ -17,6 +18,8 @@ import atypon.app.node.service.services.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +28,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.sql.Time;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/document")
@@ -112,7 +120,7 @@ public class DocumentController {
                 if (!validatorResponse.isValid()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validatorResponse.getMessage());
                 }
-                return ResponseEntity.ok( documentService.readDocumentById(database, collection, documentData));
+                return ResponseEntity.ok(documentService.readDocumentById(database, collection, documentData));
             });
             return (ResponseEntity<?>) result.resultIfLockAcquired;
         } catch (Exception e) {
@@ -159,6 +167,42 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(e.getMessage() + ", Request timeout, Please try again!");
         }
     }
+
+
+    // REMOVE this
+
+    private ValueOperations<String, String> redis;
+    public void updateDocument(Document document) throws InterruptedException {
+        String id = document.getId();
+        tryToGetLock( () -> {
+                Boolean acquired = redis.setIfAbsent(id, "DocumentLock", 120, TimeUnit.SECONDS);
+                if (!acquired) {
+                    return null;
+                }
+                // Acquired
+
+                // Update document
+
+                // Release
+                redis.getOperations().delete(id);
+                return "Lock Acquired and finished update";
+        });
+    }
+    public <T> T tryToGetLock(Supplier<T> task) throws InterruptedException {
+        while (true) {
+            final T response = task.get();
+            if (response != null) {
+                return response;
+            }
+            Thread.sleep(500);
+        }
+    }
+
+
+
+
+
+
     @PostMapping("/update")
     public ResponseEntity<?> updateDocument(@RequestBody DocumentUpdateRequest request) {
         JsonNode document = request.getUpdateRequest();
@@ -176,7 +220,6 @@ public class DocumentController {
 
                 kafkaService.broadCast(TopicType.Update_Document,
                         new UpdateDocumentEvent(request));
-
                 return ResponseEntity.ok("Document has been updated successfully!");
             });
             return (ResponseEntity<String>) result.resultIfLockAcquired;

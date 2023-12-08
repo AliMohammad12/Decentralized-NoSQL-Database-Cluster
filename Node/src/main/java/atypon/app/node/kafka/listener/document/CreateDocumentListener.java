@@ -33,7 +33,6 @@ public class CreateDocumentListener implements EventListener {
         documentService.addDocument(request);
 
         String id = request.getDocumentNode().get("data").get("id").asText();
-        // release
         distributedLocker.releaseWriteLock(DOCUMENT_PREFIX + id);
     }
 }

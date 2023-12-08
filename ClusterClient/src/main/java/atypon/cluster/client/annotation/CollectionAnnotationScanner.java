@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class CustomAnnotationAspect {
+public class CollectionAnnotationScanner {
     private final ClusterCollectionService clusterCollectionService;
-    public CustomAnnotationAspect(ClusterCollectionService clusterCollectionService) {
+    public CollectionAnnotationScanner(ClusterCollectionService clusterCollectionService) {
         this.clusterCollectionService = clusterCollectionService;
     }
     @PostConstruct

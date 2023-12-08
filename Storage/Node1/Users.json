@@ -1,7 +1,4 @@
 [ {
-  "username" : "bank",
-  "password" : "bank"
-}, {
-  "username" : "User1",
-  "password" : "User1"
+  "username" : "BankApp",
+  "password" : "123"
 } ]

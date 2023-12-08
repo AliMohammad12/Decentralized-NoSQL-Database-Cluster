@@ -18,11 +18,6 @@ public class ClusterService {
         try {
             String[] command = {"docker-compose", "-f", dockerComposeFile, "up", "--build", "-d"};
             Process process = Runtime.getRuntime().exec(command);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
             return process.waitFor() == 0;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -33,11 +28,6 @@ public class ClusterService {
         try {
             String[] command = {"docker-compose", "-f", dockerComposeFile, "down"};
             Process process = Runtime.getRuntime().exec(command);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
             return process.waitFor() == 0;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();

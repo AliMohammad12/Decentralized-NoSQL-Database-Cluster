@@ -55,7 +55,6 @@ public class ClusterCollectionService {
         schema.put("collection", collection);
         objectNode.put("collectionSchema", schema);
 
-
         String url = "http://localhost:9000/load-balance/write";
         User user = new User(UserInfo.getUsername(), UserInfo.getPassword());
         WriteRequest writeRequest = new WriteRequest(user,

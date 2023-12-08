@@ -12,6 +12,5 @@ public class CreateUserEvent extends WriteEvent {
     private UserRequest userRequest;
     public CreateUserEvent(UserRequest userRequest) {
         this.userRequest = userRequest;
-        this.broadcastingNodeName = Node.getName();
     }
 }

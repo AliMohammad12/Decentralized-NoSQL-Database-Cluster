@@ -19,6 +19,7 @@ public class CreateCollectionEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.createCollectionRequest = createCollectionRequest;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }
+
+

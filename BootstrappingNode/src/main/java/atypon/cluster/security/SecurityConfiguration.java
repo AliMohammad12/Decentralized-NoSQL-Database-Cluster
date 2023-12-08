@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return NoOpPasswordEncoder.getInstance();
     }
     @Bean
     public UserDetailsService userDetailsService() {
@@ -32,7 +32,6 @@ public class SecurityConfiguration {
                 .password("admin")
                 .roles("ADMIN")
                 .build();
-
         return new InMemoryUserDetailsManager(admin);
     }
     @Bean
@@ -54,7 +53,6 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
-
     @Bean
     public SuccessHandler successHandler() {
         return new SuccessHandler();

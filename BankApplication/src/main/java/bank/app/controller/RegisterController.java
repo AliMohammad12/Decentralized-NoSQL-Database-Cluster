@@ -25,7 +25,6 @@ public class RegisterController {
         this.accountService = accountService;
         this.customerService = customerService;
     }
-
     @GetMapping("/register")
     public String registerPage() {
         return "registration_page";

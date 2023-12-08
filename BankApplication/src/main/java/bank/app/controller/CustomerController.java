@@ -30,13 +30,12 @@ public class CustomerController {
         this.customerService = customerService;
         this.transactionService = transactionService;
     }
-
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
         String customerId = (String) session.getAttribute("customerId");
         Customer customer = customerService.getCustomerById(customerId);
-        model.addAttribute("customer", customer);
 
+        model.addAttribute("customer", customer);
         model.addAttribute("balance", customer.getBalance());
         model.addAttribute("accountType", customer.getAccountType());
         model.addAttribute("username", customer.getUsername());

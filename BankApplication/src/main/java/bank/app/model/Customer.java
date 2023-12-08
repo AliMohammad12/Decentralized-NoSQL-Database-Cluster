@@ -16,7 +16,6 @@ public class Customer {
     private String accountType;
     private double balance;
     private int age;
-
     public Customer(String accountId, String username, String accountType, double balance, int age) {
         this.accountId = accountId;
         this.username = username;

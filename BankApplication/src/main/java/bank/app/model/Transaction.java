@@ -15,7 +15,6 @@ public class Transaction {
     private String senderId;
     private double amount;
     private String date;
-
     public Transaction(String receiverId, String senderId, double amount, String date) {
         this.receiverId = receiverId;
         this.senderId = senderId;

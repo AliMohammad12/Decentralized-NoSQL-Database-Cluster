@@ -22,6 +22,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 @Component
 @DependsOn("clusterDatabaseService")
 public class ClusterDocumentService {
@@ -33,7 +38,6 @@ public class ClusterDocumentService {
     public ClusterDocumentService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
     public <T> String createDocument(Class<?> collection, T document) throws JsonProcessingException {
         String collectionName = collection.getSimpleName();
 

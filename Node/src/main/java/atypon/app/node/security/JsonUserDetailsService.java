@@ -12,7 +12,6 @@ import java.io.IOException;
 
 public class JsonUserDetailsService implements UserDetailsService {
     private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {

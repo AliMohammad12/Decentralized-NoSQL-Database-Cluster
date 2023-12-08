@@ -81,6 +81,9 @@ public class JsonServiceImpl implements JsonService {
     public ArrayNode readAsJsonArray(List<String> documentsId, Path path) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         ArrayNode documentsArray = objectMapper.createArrayNode();
+        if (documentsId == null) {
+            return documentsArray;
+        }
         for (String id : documentsId) {
             if (!id.endsWith(".json")) {
                 id += ".json";

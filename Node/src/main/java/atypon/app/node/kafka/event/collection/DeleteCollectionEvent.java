@@ -19,6 +19,5 @@ public class DeleteCollectionEvent extends WriteEvent {
         UserDetails user = (UserDetails) authentication.getPrincipal();
         this.collectionRequest = collectionRequest;
         this.username = user.getUsername();
-        this.broadcastingNodeName = Node.getName();
     }
 }

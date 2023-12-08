@@ -2,7 +2,6 @@ package bank.app.service;
 
 import atypon.cluster.client.exception.DocumentReadingException;
 import atypon.cluster.client.request.Property;
-import atypon.cluster.client.service.ClusterCollectionService;
 import atypon.cluster.client.service.ClusterDocumentService;
 import bank.app.model.Account;
 
@@ -10,7 +9,6 @@ import bank.app.model.Account;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

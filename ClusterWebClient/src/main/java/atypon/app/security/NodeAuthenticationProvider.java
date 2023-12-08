@@ -22,7 +22,6 @@ public class NodeAuthenticationProvider implements AuthenticationProvider {
     public NodeAuthenticationProvider(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();
@@ -47,7 +46,6 @@ public class NodeAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Invalid credentials");
         }
     }
-
     @Override
     public boolean supports(Class<?> authentication) {
         return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);

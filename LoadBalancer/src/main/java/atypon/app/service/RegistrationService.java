@@ -23,12 +23,9 @@ public class RegistrationService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Object> requestEntity = new HttpEntity<>(userRequest, headers);
-
         try {
             return registrationRestTemplate.exchange("http://NODE/user/register",
                     HttpMethod.POST, requestEntity, String.class);
-
-
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         }
